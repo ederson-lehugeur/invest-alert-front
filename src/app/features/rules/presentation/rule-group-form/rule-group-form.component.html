@@ -1,0 +1,70 @@
+<form class="rule-group-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <h3 class="rule-group-form__title">Create Rule Group</h3>
+
+  <app-error-message [message]="error" />
+
+  <div class="rule-group-form__field">
+    <label for="ticker">Ticker</label>
+    <input id="ticker" type="text" formControlName="ticker" />
+    @if (form.get('ticker')?.touched && form.get('ticker')?.hasError('required')) {
+      <span class="rule-group-form__error">Ticker is required</span>
+    }
+  </div>
+
+  <div class="rule-group-form__field">
+    <label for="groupName">Group Name</label>
+    <input id="groupName" type="text" formControlName="name" />
+    @if (form.get('name')?.touched && form.get('name')?.hasError('required')) {
+      <span class="rule-group-form__error">Group name is required</span>
+    }
+  </div>
+
+  <div class="rule-group-form__rules" formArrayName="rules">
+    <h4>Rules</h4>
+    @for (rule of rulesArray.controls; track $index) {
+      <div class="rule-group-form__rule-entry" [formGroupName]="$index">
+        <select formControlName="field" [attr.aria-label]="'Field for rule ' + ($index + 1)">
+          @for (f of fieldOptions; track f) {
+            <option [value]="f">{{ f }}</option>
+          }
+        </select>
+
+        <select formControlName="operator" [attr.aria-label]="'Operator for rule ' + ($index + 1)">
+          @for (op of operatorOptions; track op) {
+            <option [value]="op">{{ op }}</option>
+          }
+        </select>
+
+        <input
+          type="number"
+          formControlName="targetValue"
+          placeholder="Target value"
+          [attr.aria-label]="'Target value for rule ' + ($index + 1)"
+        />
+
+        <button
+          type="button"
+          class="rule-group-form__remove-button"
+          (click)="removeRule($index)"
+          [disabled]="rulesArray.length <= 1"
+          [attr.aria-label]="'Remove rule ' + ($index + 1)"
+        >
+          Remove
+        </button>
+      </div>
+    }
+
+    <button type="button" class="rule-group-form__add-button" (click)="addRule()">
+      + Add Rule
+    </button>
+  </div>
+
+  <div class="rule-group-form__actions">
+    <button type="button" class="rule-group-form__button rule-group-form__button--cancel" (click)="onCancel()">
+      Cancel
+    </button>
+    <button type="submit" class="rule-group-form__button rule-group-form__button--submit">
+      Create Group
+    </button>
+  </div>
+</form>

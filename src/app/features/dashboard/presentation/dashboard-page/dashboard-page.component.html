@@ -1,0 +1,13 @@
+<div class="dashboard">
+  <h1 class="dashboard-title">Dashboard</h1>
+  <p class="dashboard-subtitle">Welcome to InvestAlert. Choose a section to get started.</p>
+
+  <div class="dashboard-cards">
+    @for (card of navigationCards; track card.path) {
+      <a [routerLink]="card.path" class="dashboard-card">
+        <h2 class="dashboard-card-title">{{ card.title }}</h2>
+        <p class="dashboard-card-description">{{ card.description }}</p>
+      </a>
+    }
+  </div>
+</div>

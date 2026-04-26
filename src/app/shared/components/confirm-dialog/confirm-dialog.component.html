@@ -1,0 +1,22 @@
+@if (isOpen) {
+  <div class="confirm-dialog__overlay" (click)="onCancel()">
+    <div
+      class="confirm-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="confirm-dialog__title">{{ title }}</h2>
+      <p class="confirm-dialog__message">{{ message }}</p>
+      <div class="confirm-dialog__actions">
+        <button class="confirm-dialog__button confirm-dialog__button--cancel" (click)="onCancel()">
+          Cancel
+        </button>
+        <button class="confirm-dialog__button confirm-dialog__button--confirm" (click)="onConfirm()">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+}

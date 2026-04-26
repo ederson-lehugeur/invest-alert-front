@@ -1,0 +1,39 @@
+<div class="asset-detail">
+  <a routerLink="/assets" class="asset-detail__back">&larr; Back to Assets</a>
+
+  <app-error-message [message]="(facade.error$ | async) ?? null" />
+
+  @if (facade.isLoading$ | async) {
+    <app-loading-indicator />
+  }
+
+  @if (facade.selectedAsset$ | async; as asset) {
+    <div class="asset-card">
+      <h1 class="asset-card__title">{{ asset.ticker }}</h1>
+      <p class="asset-card__name">{{ asset.name }}</p>
+
+      <dl class="asset-card__details">
+        <div class="detail-row">
+          <dt>Current Price</dt>
+          <dd>{{ asset.currentPrice | number:'1.2-2' }}</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Dividend Yield</dt>
+          <dd>{{ asset.dividendYield | number:'1.2-2' }}%</dd>
+        </div>
+        <div class="detail-row">
+          <dt>P/VP</dt>
+          <dd>{{ asset.pVp | number:'1.2-2' }}</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Updated At</dt>
+          <dd>{{ asset.updatedAt | date:'medium' }}</dd>
+        </div>
+      </dl>
+    </div>
+  }
+
+  @if (!(facade.isLoading$ | async) && !(facade.selectedAsset$ | async) && (facade.error$ | async)) {
+    <p class="asset-detail__not-found">Asset not found.</p>
+  }
+</div>

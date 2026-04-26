@@ -1,0 +1,55 @@
+<div class="assets-page">
+  <h1 class="assets-page__title">Assets</h1>
+
+  <app-error-message [message]="(facade.error$ | async) ?? null" />
+
+  @if (facade.isLoading$ | async) {
+    <app-loading-indicator />
+  }
+
+  @if (facade.assets$ | async; as assetsPage) {
+    @if (assetsPage.content.length > 0) {
+      <div class="table-wrapper">
+        <table class="assets-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Name</th>
+              <th class="text-right">Price</th>
+              <th class="text-right">Dividend Yield</th>
+              <th class="text-right">P/VP</th>
+              <th>Updated At</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (asset of assetsPage.content; track asset.ticker) {
+              <tr
+                class="assets-table__row"
+                (click)="onRowClick(asset.ticker)"
+                (keydown.enter)="onRowClick(asset.ticker)"
+                tabindex="0"
+                role="link"
+                [attr.aria-label]="'View details for ' + asset.ticker"
+              >
+                <td>{{ asset.ticker }}</td>
+                <td>{{ asset.name }}</td>
+                <td class="text-right">{{ asset.currentPrice | number:'1.2-2' }}</td>
+                <td class="text-right">{{ asset.dividendYield | number:'1.2-2' }}%</td>
+                <td class="text-right">{{ asset.pVp | number:'1.2-2' }}</td>
+                <td>{{ asset.updatedAt | date:'short' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="assetsPage.page"
+        [totalPages]="assetsPage.totalPages"
+        (pageChange)="onPageChange($event)"
+      />
+    } @else {
+      <p class="assets-page__empty">No assets found.</p>
+    }
+  }
+</div>

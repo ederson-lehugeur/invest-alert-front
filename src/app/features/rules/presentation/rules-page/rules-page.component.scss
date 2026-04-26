@@ -1,0 +1,96 @@
+.rules-page {
+  padding: 1.5rem;
+
+  &__title {
+    margin-bottom: 1rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &--primary {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+    &--secondary {
+      background-color: #198754;
+      color: #fff;
+    }
+  }
+
+  &__section {
+    margin-top: 1.5rem;
+
+    h2 {
+      margin-bottom: 0.75rem;
+    }
+  }
+
+  &__empty {
+    color: #6c757d;
+    font-style: italic;
+  }
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.rules-table,
+.rule-groups-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+    text-align: left;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+  }
+
+  &__row:hover {
+    background-color: #f1f3f5;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  &__action-button {
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+
+    &--edit {
+      background-color: #ffc107;
+      color: #212529;
+    }
+
+    &--delete {
+      background-color: #dc3545;
+      color: #fff;
+    }
+  }
+}
+
+.text-right {
+  text-align: right;
+}

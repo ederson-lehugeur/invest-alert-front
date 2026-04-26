@@ -1,0 +1,74 @@
+<div class="alerts-page">
+  <h1 class="alerts-page__title">Alerts</h1>
+
+  <app-error-message [message]="(facade.error$ | async) ?? null" />
+
+  <div class="alerts-page__filters">
+    <input
+      type="text"
+      class="alerts-page__filter-input"
+      placeholder="Filter by ticker"
+      [(ngModel)]="filterTicker"
+      aria-label="Filter by ticker"
+    />
+
+    <select
+      class="alerts-page__filter-select"
+      [(ngModel)]="filterStatus"
+      aria-label="Filter by status"
+    >
+      <option value="">All</option>
+      <option value="PENDING">PENDING</option>
+      <option value="SENT">SENT</option>
+    </select>
+
+    <button
+      class="alerts-page__filter-button"
+      (click)="onFilterChange()"
+      type="button"
+    >
+      Filter
+    </button>
+  </div>
+
+  @if (facade.isLoading$ | async) {
+    <app-loading-indicator />
+  }
+
+  @if (facade.alerts$ | async; as alertsPage) {
+    @if (alertsPage.content.length > 0) {
+      <div class="table-wrapper">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Status</th>
+              <th>Details</th>
+              <th>Created At</th>
+              <th>Sent At</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (alert of alertsPage.content; track alert.id) {
+              <tr class="alerts-table__row">
+                <td>{{ alert.ticker }}</td>
+                <td>{{ alert.status }}</td>
+                <td>{{ alert.details }}</td>
+                <td>{{ alert.createdAt | date:'short' }}</td>
+                <td>{{ alert.sentAt ? (alert.sentAt | date:'short') : '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [page]="alertsPage.page"
+        [totalPages]="alertsPage.totalPages"
+        (pageChange)="onPageChange($event)"
+      />
+    } @else {
+      <p class="alerts-page__empty">No alerts found.</p>
+    }
+  }
+</div>

@@ -1,0 +1,58 @@
+<form class="rule-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+  <h3 class="rule-form__title">{{ isEditMode ? 'Edit Rule' : 'Create Rule' }}</h3>
+
+  <app-error-message [message]="error" />
+
+  <div class="rule-form__field">
+    <label for="ticker">Ticker</label>
+    <input id="ticker" type="text" formControlName="ticker" />
+    @if (form.get('ticker')?.touched && form.get('ticker')?.hasError('required')) {
+      <span class="rule-form__error">Ticker is required</span>
+    }
+  </div>
+
+  <div class="rule-form__field">
+    <label for="field">Field</label>
+    <select id="field" formControlName="field">
+      @for (f of fieldOptions; track f) {
+        <option [value]="f">{{ f }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="rule-form__field">
+    <label for="operator">Operator</label>
+    <select id="operator" formControlName="operator">
+      @for (op of operatorOptions; track op) {
+        <option [value]="op">{{ op }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="rule-form__field">
+    <label for="targetValue">Target Value</label>
+    <input id="targetValue" type="number" formControlName="targetValue" />
+    @if (form.get('targetValue')?.touched && form.get('targetValue')?.hasError('required')) {
+      <span class="rule-form__error">Target value is required</span>
+    }
+  </div>
+
+  <div class="rule-form__field">
+    <label for="groupId">Rule Group (optional)</label>
+    <select id="groupId" formControlName="groupId">
+      <option [ngValue]="null">None</option>
+      @for (group of ruleGroups; track group.id) {
+        <option [ngValue]="group.id">{{ group.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="rule-form__actions">
+    <button type="button" class="rule-form__button rule-form__button--cancel" (click)="onCancel()">
+      Cancel
+    </button>
+    <button type="submit" class="rule-form__button rule-form__button--submit">
+      {{ isEditMode ? 'Update' : 'Create' }}
+    </button>
+  </div>
+</form>
