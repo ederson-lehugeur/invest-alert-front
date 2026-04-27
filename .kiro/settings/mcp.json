@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "invest-alert-api": {
+      "command": "/home/eddye/.local/bin/swagger-mcp",
+      "args": [
+        "--spec",
+        "http://localhost:8080/v3/api-docs",
+        "--name",
+        "Invest-Alert-API",
+        "--server-url",
+        "http://localhost:8080"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "list_2",
+        "list",
+        "list_1",
+        "list_3"
+      ]
+    }
+  }
+}

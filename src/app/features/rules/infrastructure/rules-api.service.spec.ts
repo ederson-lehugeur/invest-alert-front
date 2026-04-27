@@ -47,7 +47,7 @@ describe('RulesApiService', () => {
         expect(rules[0].ticker).toBe('PETR4');
       });
 
-      const req = httpTesting.expectOne('/api/rules');
+      const req = httpTesting.expectOne('/api/v1/rules');
       expect(req.request.method).toBe('GET');
       req.flush([ruleApiResponse]);
     });
@@ -67,7 +67,7 @@ describe('RulesApiService', () => {
         expect(rule.ticker).toBe('PETR4');
       });
 
-      const req = httpTesting.expectOne('/api/rules');
+      const req = httpTesting.expectOne('/api/v1/rules');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(command);
       req.flush(ruleApiResponse);
@@ -86,7 +86,7 @@ describe('RulesApiService', () => {
         expect(rule.id).toBe(1);
       });
 
-      const req = httpTesting.expectOne('/api/rules/1');
+      const req = httpTesting.expectOne('/api/v1/rules/1');
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toEqual(command);
       req.flush(ruleApiResponse);
@@ -97,7 +97,7 @@ describe('RulesApiService', () => {
     it('should DELETE /api/rules/:id', () => {
       service.delete(1).subscribe();
 
-      const req = httpTesting.expectOne('/api/rules/1');
+      const req = httpTesting.expectOne('/api/v1/rules/1');
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
     });

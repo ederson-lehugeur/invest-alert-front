@@ -12,23 +12,23 @@ export class RulesApiService implements RuleRepository {
 
   list(): Observable<Rule[]> {
     return this.http
-      .get<RuleApiResponse[]>('/api/rules')
+      .get<RuleApiResponse[]>('/api/v1/rules')
       .pipe(map((responses) => responses.map(mapRuleResponse)));
   }
 
   create(command: CreateRuleCommand): Observable<Rule> {
     return this.http
-      .post<RuleApiResponse>('/api/rules', command)
+      .post<RuleApiResponse>('/api/v1/rules', command)
       .pipe(map(mapRuleResponse));
   }
 
   update(id: number, command: UpdateRuleCommand): Observable<Rule> {
     return this.http
-      .put<RuleApiResponse>(`/api/rules/${id}`, command)
+      .put<RuleApiResponse>(`/api/v1/rules/${id}`, command)
       .pipe(map(mapRuleResponse));
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/rules/${id}`);
+    return this.http.delete<void>(`/api/v1/rules/${id}`);
   }
 }

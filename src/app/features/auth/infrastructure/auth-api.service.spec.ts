@@ -29,7 +29,7 @@ describe('AuthApiService', () => {
   });
 
   describe('register', () => {
-    it('should POST to /api/auth/register and map response to User domain model', () => {
+    it('should POST to /api/v1/auth/register and map response to User domain model', () => {
       const command = { name: 'John', email: 'john@example.com', password: 'secret' };
       const apiResponse: UserApiResponse = {
         id: 1,
@@ -46,7 +46,7 @@ describe('AuthApiService', () => {
         expect(user.createdAt.toISOString()).toBe('2025-06-01T12:00:00.000Z');
       });
 
-      const req = httpTesting.expectOne('/api/auth/register');
+      const req = httpTesting.expectOne('/api/v1/auth/register');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(command);
       req.flush(apiResponse);
@@ -54,7 +54,7 @@ describe('AuthApiService', () => {
   });
 
   describe('login', () => {
-    it('should POST to /api/auth/login and return Token directly', () => {
+    it('should POST to /api/v1/auth/login and return Token directly', () => {
       const command = { email: 'john@example.com', password: 'secret' };
       const tokenResponse = { token: 'jwt-token-123', expiresIn: 3600 };
 
@@ -63,7 +63,7 @@ describe('AuthApiService', () => {
         expect(token.expiresIn).toBe(3600);
       });
 
-      const req = httpTesting.expectOne('/api/auth/login');
+      const req = httpTesting.expectOne('/api/v1/auth/login');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(command);
       req.flush(tokenResponse);

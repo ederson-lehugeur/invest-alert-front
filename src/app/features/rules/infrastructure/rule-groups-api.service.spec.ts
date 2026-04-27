@@ -48,7 +48,7 @@ describe('RuleGroupsApiService', () => {
   });
 
   describe('list', () => {
-    it('should GET /api/rule-groups and map response with nested rules', () => {
+    it('should GET /api/v1/rule-groups and map response with nested rules', () => {
       service.list().subscribe((groups) => {
         expect(groups).toHaveLength(1);
         expect(groups[0].id).toBe(10);
@@ -57,14 +57,14 @@ describe('RuleGroupsApiService', () => {
         expect(groups[0].rules[0].id).toBe(1);
       });
 
-      const req = httpTesting.expectOne('/api/rule-groups');
+      const req = httpTesting.expectOne('/api/v1/rule-groups');
       expect(req.request.method).toBe('GET');
       req.flush([groupApiResponse]);
     });
   });
 
   describe('create', () => {
-    it('should POST /api/rule-groups and map response', () => {
+    it('should POST /api/v1/rule-groups and map response', () => {
       const command = {
         ticker: 'PETR4',
         name: 'New Group',
@@ -78,7 +78,7 @@ describe('RuleGroupsApiService', () => {
         expect(group.name).toBe('Petrobras Alerts');
       });
 
-      const req = httpTesting.expectOne('/api/rule-groups');
+      const req = httpTesting.expectOne('/api/v1/rule-groups');
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual(command);
       req.flush(groupApiResponse);

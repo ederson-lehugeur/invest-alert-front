@@ -47,7 +47,7 @@ describe('AlertsApiService', () => {
       totalPages: 1,
     };
 
-    it('should GET /api/alerts with only page and size when no filters', () => {
+    it('should GET /api/v1/alerts with only page and size when no filters', () => {
       service.list({}, 0, 20).subscribe((result) => {
         expect(result.page).toBe(0);
         expect(result.size).toBe(20);
@@ -58,7 +58,7 @@ describe('AlertsApiService', () => {
         expect(result.content[0].createdAt).toBeInstanceOf(Date);
       });
 
-      const req = httpTesting.expectOne('/api/alerts?page=0&size=20');
+      const req = httpTesting.expectOne('/api/v1/alerts?page=0&size=20');
       expect(req.request.method).toBe('GET');
       req.flush(apiPage);
     });
@@ -66,7 +66,7 @@ describe('AlertsApiService', () => {
     it('should include ticker param when filter has ticker', () => {
       service.list({ ticker: 'VALE3' }, 0, 20).subscribe();
 
-      const req = httpTesting.expectOne('/api/alerts?page=0&size=20&ticker=VALE3');
+      const req = httpTesting.expectOne('/api/v1/alerts?page=0&size=20&ticker=VALE3');
       expect(req.request.method).toBe('GET');
       req.flush(apiPage);
     });
@@ -74,7 +74,7 @@ describe('AlertsApiService', () => {
     it('should include status param when filter has status', () => {
       service.list({ status: 'SENT' }, 0, 20).subscribe();
 
-      const req = httpTesting.expectOne('/api/alerts?page=0&size=20&status=SENT');
+      const req = httpTesting.expectOne('/api/v1/alerts?page=0&size=20&status=SENT');
       expect(req.request.method).toBe('GET');
       req.flush(apiPage);
     });
@@ -83,7 +83,7 @@ describe('AlertsApiService', () => {
       service.list({ ticker: 'PETR4', status: 'PENDING' }, 1, 10).subscribe();
 
       const req = httpTesting.expectOne(
-        '/api/alerts?page=1&size=10&ticker=PETR4&status=PENDING',
+        '/api/v1/alerts?page=1&size=10&ticker=PETR4&status=PENDING',
       );
       expect(req.request.method).toBe('GET');
       req.flush(apiPage);
@@ -119,7 +119,7 @@ describe('AlertsApiService', () => {
         expect(alert.sentAt!.toISOString()).toBe('2025-06-01T11:00:00.000Z');
       });
 
-      const req = httpTesting.expectOne('/api/alerts?page=0&size=20');
+      const req = httpTesting.expectOne('/api/v1/alerts?page=0&size=20');
       expect(req.request.method).toBe('GET');
       req.flush(pageWithSentAlert);
     });

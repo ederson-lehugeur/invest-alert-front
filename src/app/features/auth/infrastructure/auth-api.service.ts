@@ -13,11 +13,11 @@ export class AuthApiService implements AuthRepository {
 
   register(command: RegisterCommand): Observable<User> {
     return this.http
-      .post<UserApiResponse>('/api/auth/register', command)
+      .post<UserApiResponse>('/api/v1/auth/register', command)
       .pipe(map(mapUserResponse));
   }
 
   login(command: LoginCommand): Observable<Token> {
-    return this.http.post<Token>('/api/auth/login', command);
+    return this.http.post<Token>('/api/v1/auth/login', command);
   }
 }

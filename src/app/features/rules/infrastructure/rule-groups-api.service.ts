@@ -12,13 +12,13 @@ export class RuleGroupsApiService implements RuleGroupRepository {
 
   list(): Observable<RuleGroup[]> {
     return this.http
-      .get<RuleGroupApiResponse[]>('/api/rule-groups')
+      .get<RuleGroupApiResponse[]>('/api/v1/rule-groups')
       .pipe(map((responses) => responses.map(mapRuleGroupResponse)));
   }
 
   create(command: CreateRuleGroupCommand): Observable<RuleGroup> {
     return this.http
-      .post<RuleGroupApiResponse>('/api/rule-groups', command)
+      .post<RuleGroupApiResponse>('/api/v1/rule-groups', command)
       .pipe(map(mapRuleGroupResponse));
   }
 }

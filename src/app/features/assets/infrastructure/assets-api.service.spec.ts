@@ -58,7 +58,7 @@ describe('AssetsApiService', () => {
         expect(result.content[0].updatedAt).toBeInstanceOf(Date);
       });
 
-      const req = httpTesting.expectOne('/api/assets?page=0&size=20');
+      const req = httpTesting.expectOne('/api/v1/assets?page=0&size=20');
       expect(req.request.method).toBe('GET');
       req.flush(apiPage);
     });
@@ -77,7 +77,7 @@ describe('AssetsApiService', () => {
         expect(result.size).toBe(10);
       });
 
-      const req = httpTesting.expectOne('/api/assets?page=2&size=10');
+      const req = httpTesting.expectOne('/api/v1/assets?page=2&size=10');
       expect(req.request.method).toBe('GET');
       req.flush(apiPage);
     });
@@ -95,7 +95,7 @@ describe('AssetsApiService', () => {
         expect(asset.updatedAt.toISOString()).toBe('2025-06-01T12:00:00.000Z');
       });
 
-      const req = httpTesting.expectOne('/api/assets/PETR4');
+      const req = httpTesting.expectOne('/api/v1/assets/PETR4');
       expect(req.request.method).toBe('GET');
       req.flush(assetApiResponse);
     });

@@ -1,0 +1,20 @@
+{
+  "enabled": true,
+  "name": "Feature Impact Review",
+  "description": "Validates consistency, quality, and traceability whenever components, services, models, or routes are modified in the features or core layers. Checks impact on UI/UX, API consumption, alert business rules, and application state.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/app/features/**/*.ts",
+      "src/app/features/**/*.html",
+      "src/app/features/**/*.scss",
+      "src/app/core/**/*.ts",
+      "src/app/app.routes.ts"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A file in the features or core layer was just modified. You MUST perform an impact review to ensure consistency, quality, and traceability. Analyze the change and validate:\n\n1. **UI/UX Impact**: Does this change affect the user interface? Are there visual regressions, broken bindings, missing inputs/outputs, or accessibility issues? Verify that presentation components only delegate to facades and do not contain business logic.\n\n2. **API Consumption Impact**: Does this change affect HTTP calls, request/response models, or API mappings? Ensure infrastructure services correctly implement domain interfaces and that API responses are properly mapped to domain models - never exposed raw to the UI.\n\n3. **Alert Business Rules Impact**: Does this change affect alert domain models, rule evaluation logic, or notification behavior? Verify that business rules remain in the domain layer and are not leaking into components or infrastructure.\n\n4. **Application State Impact**: Does this change affect state management (signals, RxJS observables, facades)? Check for duplicated state, broken reactive chains, missing unsubscriptions, or inconsistent state updates across features.\n\n5. **Architecture Compliance**: Verify the change respects Clean Architecture dependency direction (presentation -> application -> domain <- infrastructure). Flag any violations such as components importing infrastructure directly, or domain depending on Angular.\n\n6. **Route & Guard Consistency**: If routes or guards were modified, verify lazy loading is preserved, guards are correctly applied, and navigation flows remain consistent.\n\nReport ONLY actual issues found. If the change is clean and consistent, confirm it briefly without unnecessary detail."
+  }
+}

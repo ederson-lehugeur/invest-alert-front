@@ -25,7 +25,7 @@ export class AlertsApiService implements AlertRepository {
     }
 
     return this.http
-      .get<PageResult<AlertApiResponse>>('/api/alerts', { params })
+      .get<PageResult<AlertApiResponse>>('/api/v1/alerts', { params })
       .pipe(map((response) => mapPageResult(response, mapAlertResponse)));
   }
 }

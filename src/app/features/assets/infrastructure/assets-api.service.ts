@@ -17,13 +17,13 @@ export class AssetsApiService implements AssetRepository {
       .set('size', size.toString());
 
     return this.http
-      .get<PageResult<AssetApiResponse>>('/api/assets', { params })
+      .get<PageResult<AssetApiResponse>>('/api/v1/assets', { params })
       .pipe(map((response) => mapPageResult(response, mapAssetResponse)));
   }
 
   getByTicker(ticker: string): Observable<Asset> {
     return this.http
-      .get<AssetApiResponse>(`/api/assets/${ticker}`)
+      .get<AssetApiResponse>(`/api/v1/assets/${ticker}`)
       .pipe(map(mapAssetResponse));
   }
 }
