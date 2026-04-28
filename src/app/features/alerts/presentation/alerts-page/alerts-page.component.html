@@ -4,71 +4,67 @@
   <app-error-message [message]="(facade.error$ | async) ?? null" />
 
   <div class="alerts-page__filters">
-    <input
-      type="text"
-      class="alerts-page__filter-input"
-      placeholder="Filter by ticker"
-      [(ngModel)]="filterTicker"
-      aria-label="Filter by ticker"
-    />
+    <mat-form-field appearance="outline" class="alerts-page__filter-field">
+      <mat-label>Ticker</mat-label>
+      <input
+        matInput
+        [(ngModel)]="filterTicker"
+        (keyup.enter)="onFilterChange()"
+        placeholder="Filter by ticker"
+        aria-label="Filter by ticker"
+      />
+    </mat-form-field>
 
-    <select
-      class="alerts-page__filter-select"
-      [(ngModel)]="filterStatus"
-      aria-label="Filter by status"
-    >
-      <option value="">All</option>
-      <option value="PENDING">PENDING</option>
-      <option value="SENT">SENT</option>
-    </select>
+    <mat-form-field appearance="outline" class="alerts-page__filter-field">
+      <mat-label>Status</mat-label>
+      <mat-select
+        [(ngModel)]="filterStatus"
+        (selectionChange)="onFilterChange()"
+        aria-label="Filter by status"
+      >
+        <mat-option value="">All</mat-option>
+        <mat-option value="PENDING">PENDING</mat-option>
+        <mat-option value="SENT">SENT</mat-option>
+      </mat-select>
+    </mat-form-field>
 
-    <button
-      class="alerts-page__filter-button"
-      (click)="onFilterChange()"
-      type="button"
-    >
+    <button mat-flat-button color="primary" (click)="onFilterChange()" type="button">
       Filter
     </button>
   </div>
 
   @if (facade.isLoading$ | async) {
-    <app-loading-indicator />
-  }
+    <app-skeleton-loader variant="table-row" [count]="5" />
+  } @else {
+    <app-reusable-table
+      [columns]="columns"
+      [data]="alertData"
+      [paginator]="true"
+      [pageSize]="currentSize"
+      [pageIndex]="currentPage"
+      [totalElements]="totalElements"
+      [trackByFn]="trackById"
+      emptyIcon="notifications_off"
+      emptyMessage="No alerts match the current filters."
+      (pageChange)="onPageChange($event)"
+    >
+      <ng-template appCellDef="status" let-row>
+        <mat-chip
+          [class.chip--sent]="row.status === 'SENT'"
+          [class.chip--pending]="row.status === 'PENDING'"
+          disableRipple
+        >
+          {{ row.status }}
+        </mat-chip>
+      </ng-template>
 
-  @if (facade.alerts$ | async; as alertsPage) {
-    @if (alertsPage.content.length > 0) {
-      <div class="table-wrapper">
-        <table class="alerts-table">
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th>Status</th>
-              <th>Details</th>
-              <th>Created At</th>
-              <th>Sent At</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (alert of alertsPage.content; track alert.id) {
-              <tr class="alerts-table__row">
-                <td>{{ alert.ticker }}</td>
-                <td>{{ alert.status }}</td>
-                <td>{{ alert.details }}</td>
-                <td>{{ alert.createdAt | date:'short' }}</td>
-                <td>{{ alert.sentAt ? (alert.sentAt | date:'short') : '-' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <ng-template appCellDef="createdAt" let-row>
+        {{ row.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}
+      </ng-template>
 
-      <app-pagination
-        [page]="alertsPage.page"
-        [totalPages]="alertsPage.totalPages"
-        (pageChange)="onPageChange($event)"
-      />
-    } @else {
-      <p class="alerts-page__empty">No alerts found.</p>
-    }
+      <ng-template appCellDef="sentAt" let-row>
+        {{ row.sentAt ? (row.sentAt | date:'dd/MM/yyyy HH:mm:ss') : '-' }}
+      </ng-template>
+    </app-reusable-table>
   }
 </div>

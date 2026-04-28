@@ -1,0 +1,16 @@
+.shell-container {
+  height: 100dvh;
+}
+
+mat-sidenav {
+  width: 240px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.main-content {
+  padding: 1.5rem;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}

@@ -1,69 +1,59 @@
 .asset-detail {
-  padding: 1.5rem;
+  padding: 24px;
 
   &__back {
-    display: inline-block;
-    margin-bottom: 1.5rem;
-    color: #1976d2;
-    text-decoration: none;
-    font-size: 0.9375rem;
-    font-weight: 500;
+    margin-bottom: 24px;
 
-    &:hover {
-      text-decoration: underline;
+    mat-icon {
+      margin-right: 4px;
     }
   }
 
   &__not-found {
-    padding: 2rem;
+    padding: 32px;
     text-align: center;
-    color: #757575;
+    color: var(--mat-sys-on-surface-variant);
     font-size: 0.9375rem;
   }
 }
 
 .asset-card {
   max-width: 600px;
-  padding: 1.5rem;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
 
-  &__title {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #212121;
-  }
-
-  &__name {
-    margin: 0.25rem 0 1.5rem;
-    font-size: 1rem;
-    color: #616161;
+  &__icon {
+    color: var(--mat-sys-primary);
   }
 
   &__details {
-    margin: 0;
+    margin: 16px 0 0;
   }
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 0.625rem 0;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 
   dt {
     font-weight: 500;
-    color: #424242;
+    color: var(--mat-sys-on-surface-variant);
   }
 
   dd {
     margin: 0;
-    color: #212121;
+    color: var(--mat-sys-on-surface);
   }
 
   &:last-child {
     border-bottom: none;
   }
+}
+
+.positive {
+  color: var(--color-positive);
+}
+
+.negative {
+  color: var(--color-negative);
 }

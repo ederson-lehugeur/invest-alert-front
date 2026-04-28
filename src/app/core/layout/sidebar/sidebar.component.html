@@ -1,0 +1,15 @@
+<nav aria-label="Main navigation" class="sidebar-nav">
+  <mat-nav-list>
+    @for (link of navLinks; track link.path) {
+      <a
+        mat-list-item
+        [routerLink]="link.path"
+        routerLinkActive="active-link"
+        (click)="onLinkClick()"
+      >
+        <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
+        <span matListItemTitle>{{ link.label }}</span>
+      </a>
+    }
+  </mat-nav-list>
+</nav>

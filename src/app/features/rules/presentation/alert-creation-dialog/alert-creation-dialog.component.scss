@@ -1,0 +1,19 @@
+.alert-creation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 320px;
+  padding-top: 0.5rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-dialog-content {
+  overflow: visible;
+}
+
+mat-progress-spinner {
+  display: inline-block;
+}

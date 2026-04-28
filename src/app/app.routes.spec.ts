@@ -4,6 +4,7 @@ import { provideLocationMocks } from '@angular/common/testing';
 import { Component } from '@angular/core';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { routes } from './app.routes';
 import { TokenStoreService } from './features/auth/infrastructure/token-store.service';
 
@@ -36,6 +37,7 @@ describe('App Routes Integration', () => {
         provideRouter(routes),
         provideLocationMocks(),
         provideHttpClient(),
+        provideNoopAnimations(),
       ],
     });
 

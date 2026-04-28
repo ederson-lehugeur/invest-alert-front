@@ -1,0 +1,17 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--layout-topbar-bg, var(--mat-sys-surface-container-high));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.app-name {
+  font-weight: 500;
+  font-size: 1rem;
+  margin-left: 8px;
+}
+
+.spacer {
+  flex: 1;
+}

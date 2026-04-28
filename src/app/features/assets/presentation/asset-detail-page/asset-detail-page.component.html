@@ -1,36 +1,47 @@
 <div class="asset-detail">
-  <a routerLink="/assets" class="asset-detail__back">&larr; Back to Assets</a>
+  <button mat-button routerLink="/assets" class="asset-detail__back">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Assets
+  </button>
 
   <app-error-message [message]="(facade.error$ | async) ?? null" />
 
   @if (facade.isLoading$ | async) {
-    <app-loading-indicator />
+    <app-skeleton-loader variant="card" [count]="1" />
   }
 
   @if (facade.selectedAsset$ | async; as asset) {
-    <div class="asset-card">
-      <h1 class="asset-card__title">{{ asset.ticker }}</h1>
-      <p class="asset-card__name">{{ asset.name }}</p>
+    <mat-card class="asset-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="asset-card__icon">trending_up</mat-icon>
+        <mat-card-title>{{ asset.ticker }}</mat-card-title>
+        <mat-card-subtitle>{{ asset.name }}</mat-card-subtitle>
+      </mat-card-header>
 
-      <dl class="asset-card__details">
-        <div class="detail-row">
-          <dt>Current Price</dt>
-          <dd>{{ asset.currentPrice | number:'1.2-2' }}</dd>
-        </div>
-        <div class="detail-row">
-          <dt>Dividend Yield</dt>
-          <dd>{{ asset.dividendYield | number:'1.2-2' }}%</dd>
-        </div>
-        <div class="detail-row">
-          <dt>P/VP</dt>
-          <dd>{{ asset.pVp | number:'1.2-2' }}</dd>
-        </div>
-        <div class="detail-row">
-          <dt>Updated At</dt>
-          <dd>{{ asset.updatedAt | date:'medium' }}</dd>
-        </div>
-      </dl>
-    </div>
+      <mat-card-content>
+        <dl class="asset-card__details">
+          <div class="detail-row">
+            <dt>Current Price</dt>
+            <dd>{{ asset.currentPrice | number:'1.2-2' }}</dd>
+          </div>
+          <div class="detail-row">
+            <dt>Dividend Yield</dt>
+            <dd [class.positive]="asset.dividendYield > 0"
+                [class.negative]="asset.dividendYield < 0">
+              {{ asset.dividendYield | number:'1.2-2' }}%
+            </dd>
+          </div>
+          <div class="detail-row">
+            <dt>P/VP</dt>
+            <dd>{{ asset.pVp | number:'1.2-2' }}</dd>
+          </div>
+          <div class="detail-row">
+            <dt>Updated At</dt>
+            <dd>{{ asset.updatedAt | date:'dd/MM/yyyy HH:mm:ss' }}</dd>
+          </div>
+        </dl>
+      </mat-card-content>
+    </mat-card>
   }
 
   @if (!(facade.isLoading$ | async) && !(facade.selectedAsset$ | async) && (facade.error$ | async)) {

@@ -1,0 +1,78 @@
+<h2 mat-dialog-title>{{ isEditMode ? 'Edit Rule' : 'Create Rule' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" class="alert-creation-form">
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Ticker</mat-label>
+      <input matInput formControlName="ticker" placeholder="e.g. PETR4" />
+      @if (form.get('ticker')?.hasError('required') && form.get('ticker')?.touched) {
+        <mat-error>Ticker is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Field</mat-label>
+      <mat-select formControlName="field">
+        @for (option of fieldOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+      @if (form.get('field')?.hasError('required') && form.get('field')?.touched) {
+        <mat-error>Field is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Operator</mat-label>
+      <mat-select formControlName="operator">
+        @for (option of operatorOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+      @if (form.get('operator')?.hasError('required') && form.get('operator')?.touched) {
+        <mat-error>Operator is required</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Target Value</mat-label>
+      <input matInput type="number" formControlName="targetValue" placeholder="e.g. 40.00" />
+      @if (form.get('targetValue')?.hasError('required') && form.get('targetValue')?.touched) {
+        <mat-error>Target value is required</mat-error>
+      }
+    </mat-form-field>
+
+    @if (data.ruleGroups.length > 0) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Rule Group (optional)</mat-label>
+        <mat-select formControlName="groupId">
+          <mat-option [value]="null">None</mat-option>
+          @for (group of data.ruleGroups; track group.id) {
+            <mat-option [value]="group.id">{{ group.name }} ({{ group.ticker }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isSubmitting()">
+    Cancel
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="onSubmit()"
+    [disabled]="isSubmitting()"
+    aria-label="Submit rule form"
+  >
+    @if (isSubmitting()) {
+      <mat-progress-spinner diameter="20" mode="indeterminate" />
+    } @else {
+      {{ isEditMode ? 'Save Changes' : 'Create Rule' }}
+    }
+  </button>
+</mat-dialog-actions>
