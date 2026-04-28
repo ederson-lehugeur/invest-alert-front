@@ -8,8 +8,9 @@ RUN npm run build
 FROM nginx:alpine
 RUN apk add --no-cache nodejs
 
+ENV NODE_ENV=production
+
 COPY --from=build /app/dist/invest-alert-front /app/dist/invest-alert-front
-COPY --from=build /app/package.json /app/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

@@ -1,59 +1,142 @@
-# InvestAlertFront
+# invest-alert-front
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.8.
+Frontend application for **InvestAlert** - a platform for monitoring investment assets and managing price/indicator alert rules.
 
-## Development server
+Built with Angular 21, Angular Material, and Server-Side Rendering (SSR).
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
+## Features
+
+- **Authentication** - Login and registration with JWT-based session management
+- **Dashboard** - Overview of active rules and recent alert history
+- **Assets** - Browse and search investment assets by ticker
+- **Rules** - Create, edit, and delete alert rules (price, dividend yield, P/VP) with support for rule groups
+- **Alerts** - View alert history with filtering by status and ticker
+- **Theme** - Light/dark mode toggle
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Angular 21 (Standalone Components) |
+| UI | Angular Material 21 |
+| Rendering | Angular SSR (Express) |
+| Styling | SCSS |
+| Testing | Vitest + fast-check (property-based) |
+| Container | Docker (Nginx + Node SSR) |
+
+---
+
+## Architecture
+
+The project follows Clean Architecture principles organized by feature:
+
+```
+src/app/
+├── core/               # Guards, interceptors, layout, shared services
+├── features/
+│   ├── auth/           # Login, register
+│   ├── dashboard/      # Summary view
+│   ├── assets/         # Asset listing
+│   ├── rules/          # Alert rule management
+│   └── alerts/         # Alert history
+└── shared/             # Reusable components, pipes, models
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Each feature is internally structured into four layers:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```
+feature/
+├── domain/             # Models and interfaces (framework-agnostic)
+├── application/        # Facades and use-case services
+├── infrastructure/     # HTTP services and API integration
+└── presentation/       # Angular components and templates
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 22+
+- npm 11+
+
+### Install dependencies
 
 ```bash
+npm install
+```
+
+### Run development server
+
+```bash
+npm start
+```
+
+Navigate to `http://localhost:4200/`. The app reloads automatically on file changes.
+
+### Build for production
+
+```bash
+npm run build
+```
+
+Output is placed in `dist/invest-alert-front/`.
+
+### Run SSR server (after build)
+
+```bash
+npm run serve:ssr:invest-alert-front
+```
+
+---
+
+## Testing
+
+Unit and property-based tests are run with Vitest:
+
+```bash
+npm test
+```
+
+Property-based tests use [fast-check](https://fast-check.dev/) and are co-located with their respective services (`.property.spec.ts`).
+
+---
+
+## Docker
+
+The app is containerized with a multi-stage Dockerfile:
+
+1. **Build stage** - Compiles the Angular app with SSR
+2. **Runtime stage** - Nginx proxies API requests to `invest-alert-api:8080` and SSR requests to the Node server on port 4000
+
+```bash
+docker build -t invest-alert-front .
+```
+
+The container expects the backend API to be reachable at `invest-alert-api:8080` (configurable via `nginx.conf`).
+
+---
+
+## API Proxy
+
+In production (Docker), Nginx routes:
+
+- `/api/*` - proxied to the backend API (`invest-alert-api:8080`)
+- `/*` - proxied to the SSR Node server (`localhost:4000`)
+
+---
+
+## Code Generation
+
+```bash
+# Generate a component
+ng generate component features/my-feature/presentation/my-component
+
+# List all available schematics
 ng generate --help
 ```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
