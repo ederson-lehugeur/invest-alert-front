@@ -1,20 +1,35 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AuthFacade } from '../../application/auth.facade';
-import { LoadingIndicatorComponent } from '../../../../shared/components/loading-indicator/loading-indicator.component';
-import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
+import { ThemeService } from '../../../../core/services/theme.service';
 
 @Component({
   selector: 'app-register-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LoadingIndicatorComponent, ErrorMessageComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatCardModule,
+    MatProgressBarModule,
+  ],
   templateUrl: './register-page.component.html',
   styleUrl: './register-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPageComponent {
   protected readonly authFacade = inject(AuthFacade);
+  protected readonly themeService = inject(ThemeService);
   protected readonly submitted = signal(false);
 
   protected readonly registerForm = new FormGroup({

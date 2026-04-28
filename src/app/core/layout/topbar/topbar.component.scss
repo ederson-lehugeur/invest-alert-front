@@ -1,0 +1,14 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.app-name {
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.spacer {
+  flex: 1;
+}

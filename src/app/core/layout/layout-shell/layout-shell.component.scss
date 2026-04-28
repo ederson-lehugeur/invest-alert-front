@@ -1,11 +1,12 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+.shell-container {
+  height: 100dvh;
 }
 
-.layout-content {
-  flex: 1;
+mat-sidenav {
+  width: 240px;
+}
+
+.main-content {
   padding: 1.5rem;
   max-width: 1200px;
   width: 100%;

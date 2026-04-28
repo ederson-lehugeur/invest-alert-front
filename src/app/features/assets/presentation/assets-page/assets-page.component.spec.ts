@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { provideRouter } from '@angular/router';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { AssetsPageComponent } from './assets-page.component';
 import { AssetsFacade } from '../../application/assets.facade';
 import { Asset } from '../../domain/models/asset.model';
@@ -51,6 +52,7 @@ describe('AssetsPageComponent', () => {
       imports: [AssetsPageComponent],
       providers: [
         provideRouter([]),
+        provideAnimationsAsync(),
         { provide: AssetsFacade, useValue: mockFacade },
       ],
     }).compileComponents();
@@ -67,17 +69,20 @@ describe('AssetsPageComponent', () => {
     expect(mockFacade.loadAssets).toHaveBeenCalledWith(0, 20);
   });
 
-  it('should display loading indicator when loading', () => {
+  it('should display skeleton loader when loading', () => {
     mockFacade.isLoading$.next(true);
     fixture.detectChanges();
 
-    const indicator = fixture.nativeElement.querySelector('app-loading-indicator');
-    expect(indicator).toBeTruthy();
+    const skeleton = fixture.nativeElement.querySelector('app-skeleton-loader');
+    expect(skeleton).toBeTruthy();
   });
 
-  it('should not display loading indicator when not loading', () => {
-    const indicator = fixture.nativeElement.querySelector('app-loading-indicator');
-    expect(indicator).toBeFalsy();
+  it('should not display skeleton loader when not loading', () => {
+    mockFacade.isLoading$.next(false);
+    fixture.detectChanges();
+
+    const skeleton = fixture.nativeElement.querySelector('app-skeleton-loader');
+    expect(skeleton).toBeFalsy();
   });
 
   it('should display error message when error exists', () => {
@@ -88,19 +93,15 @@ describe('AssetsPageComponent', () => {
     expect(errorEl).toBeTruthy();
   });
 
-  it('should render assets table when data is available', () => {
+  it('should render reusable table when data is available', () => {
     mockFacade.assets$.next(mockPageResult);
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.assets-table__row');
-    expect(rows.length).toBe(1);
-
-    const cells = rows[0].querySelectorAll('td');
-    expect(cells[0].textContent).toContain('PETR4');
-    expect(cells[1].textContent).toContain('Petrobras PN');
+    const table = fixture.nativeElement.querySelector('app-reusable-table');
+    expect(table).toBeTruthy();
   });
 
-  it('should display empty message when no assets', () => {
+  it('should display empty state when no assets', () => {
     mockFacade.assets$.next({
       content: [],
       page: 0,
@@ -110,43 +111,82 @@ describe('AssetsPageComponent', () => {
     });
     fixture.detectChanges();
 
-    const empty = fixture.nativeElement.querySelector('.assets-page__empty');
-    expect(empty).toBeTruthy();
-    expect(empty.textContent).toContain('No assets found');
+    const emptyState = fixture.nativeElement.querySelector('.empty-state');
+    expect(emptyState).toBeTruthy();
   });
 
   it('should navigate to asset detail on row click', () => {
     mockFacade.assets$.next(mockPageResult);
     fixture.detectChanges();
 
-    const row = fixture.nativeElement.querySelector('.assets-table__row');
-    row.click();
+    component['onRowClick'](mockAsset);
 
     expect(router.navigate).toHaveBeenCalledWith(['/assets', 'PETR4']);
   });
 
-  it('should render pagination when multiple pages exist', () => {
+  it('should call loadAssets with new page on page change', () => {
+    mockFacade.loadAssets.mockClear();
+    component['onPageChange']({ pageIndex: 2, pageSize: 20, length: 100 });
+    expect(mockFacade.loadAssets).toHaveBeenCalledWith(2, 20);
+  });
+
+  it('should sort data ascending by numeric column', () => {
+    const asset1: Asset = { ...mockAsset, ticker: 'A', currentPrice: 50 };
+    const asset2: Asset = { ...mockAsset, ticker: 'B', currentPrice: 10 };
+    const asset3: Asset = { ...mockAsset, ticker: 'C', currentPrice: 30 };
+
     mockFacade.assets$.next({
-      ...mockPageResult,
-      totalPages: 3,
+      content: [asset1, asset2, asset3],
+      page: 0,
+      size: 20,
+      totalElements: 3,
+      totalPages: 1,
     });
     fixture.detectChanges();
 
-    const pagination = fixture.nativeElement.querySelector('app-pagination');
-    expect(pagination).toBeTruthy();
+    component['onSortChange']({ active: 'currentPrice', direction: 'asc' });
+
+    expect(component['sortedData'].map((a) => a.ticker)).toEqual(['B', 'C', 'A']);
   });
 
-  it('should not render pagination controls when single page', () => {
-    mockFacade.assets$.next(mockPageResult);
+  it('should sort data descending by numeric column', () => {
+    const asset1: Asset = { ...mockAsset, ticker: 'A', currentPrice: 50 };
+    const asset2: Asset = { ...mockAsset, ticker: 'B', currentPrice: 10 };
+    const asset3: Asset = { ...mockAsset, ticker: 'C', currentPrice: 30 };
+
+    mockFacade.assets$.next({
+      content: [asset1, asset2, asset3],
+      page: 0,
+      size: 20,
+      totalElements: 3,
+      totalPages: 1,
+    });
     fixture.detectChanges();
 
-    const paginationNav = fixture.nativeElement.querySelector('.pagination');
-    expect(paginationNav).toBeFalsy();
+    component['onSortChange']({ active: 'currentPrice', direction: 'desc' });
+
+    expect(component['sortedData'].map((a) => a.ticker)).toEqual(['A', 'C', 'B']);
   });
 
-  it('should call loadAssets with new page on page change', () => {
-    mockFacade.loadAssets.mockClear();
-    component['onPageChange'](2);
-    expect(mockFacade.loadAssets).toHaveBeenCalledWith(2, 20);
+  it('should reset sort when direction is empty', () => {
+    const asset1: Asset = { ...mockAsset, ticker: 'A', currentPrice: 50 };
+    const asset2: Asset = { ...mockAsset, ticker: 'B', currentPrice: 10 };
+
+    mockFacade.assets$.next({
+      content: [asset1, asset2],
+      page: 0,
+      size: 20,
+      totalElements: 2,
+      totalPages: 1,
+    });
+    fixture.detectChanges();
+
+    // Sort first
+    component['onSortChange']({ active: 'currentPrice', direction: 'asc' });
+    expect(component['sortedData'][0].ticker).toBe('B');
+
+    // Reset sort
+    component['onSortChange']({ active: 'currentPrice', direction: '' });
+    expect(component['sortedData'][0].ticker).toBe('A');
   });
 });

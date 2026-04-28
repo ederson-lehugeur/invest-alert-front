@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import * as fc from 'fast-check';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
-import { RuleGroup } from '../../domain/models/rule-group.model';
 import { RuleApiResponse, mapRuleResponse } from '../../infrastructure/mappers/rule.mapper';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 /**
  * Preservation Property Tests - Property 2
@@ -28,10 +30,6 @@ const COMPARISON_OPERATORS: ComparisonOperator[] = [
 const ruleFieldArb = fc.constantFrom(...RULE_FIELDS);
 const comparisonOperatorArb = fc.constantFrom(...COMPARISON_OPERATORS);
 
-/**
- * Arbitrary that generates RuleApiResponse objects with triggered: false (or absent).
- * These represent non-triggered rules whose behavior must be preserved.
- */
 const nonTriggeredRuleApiResponseArb: fc.Arbitrary<RuleApiResponse> = fc.record({
   id: fc.integer({ min: 1, max: 10000 }),
   ticker: fc.stringMatching(/^[A-Z]{4}[0-9]{1,2}$/),
@@ -43,13 +41,56 @@ const nonTriggeredRuleApiResponseArb: fc.Arbitrary<RuleApiResponse> = fc.record(
   triggered: fc.constant(false),
 });
 
-/**
- * Variant that explicitly includes triggered: false on the API response object.
- */
 const explicitNonTriggeredApiResponseArb = nonTriggeredRuleApiResponseArb.map((resp) => ({
   ...resp,
   triggered: false,
 }));
+
+class MockMatDialog {
+  open = vi.fn().mockReturnValue({
+    afterClosed: () => of(null),
+  } as Partial<MatDialogRef<unknown>>);
+}
+
+function buildMockFacade() {
+  return {
+    loadRules: vi.fn(),
+    createRule: vi.fn(),
+    updateRule: vi.fn(),
+    deleteRule: vi.fn(),
+    createRuleGroup: vi.fn(),
+    rules$: new BehaviorSubject<Rule[]>([]),
+    ruleGroups$: new BehaviorSubject<Rule[]>([]),
+    isLoading$: new BehaviorSubject<boolean>(false),
+    error$: new BehaviorSubject<string | null>(null),
+  };
+}
+
+async function createTestBed(
+  mockFacade: ReturnType<typeof buildMockFacade>,
+  mockDialog: MockMatDialog,
+): Promise<{ component: RulesPageComponent; fixture: ComponentFixture<RulesPageComponent>; dialogSpy: MockMatDialog }> {
+  await TestBed.configureTestingModule({
+    imports: [RulesPageComponent, NoopAnimationsModule],
+    providers: [
+      { provide: RulesFacade, useValue: mockFacade },
+      { provide: NotificationService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+    ],
+  }).compileComponents();
+
+  const fixture = TestBed.createComponent(RulesPageComponent);
+  const component = fixture.componentInstance;
+
+  // Get the actual MatDialog instance from the component's injector and spy on it
+  const componentDialog = fixture.debugElement.injector.get(MatDialog);
+  vi.spyOn(componentDialog, 'open').mockReturnValue({
+    afterClosed: () => of(null),
+  } as ReturnType<MatDialog['open']>);
+  const dialogSpy = componentDialog as unknown as MockMatDialog;
+
+  fixture.detectChanges();
+  return { component, fixture, dialogSpy };
+}
 
 describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable', () => {
   /**
@@ -99,47 +140,19 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
    * **Validates: Requirements 3.1, 3.2**
    *
    * Template preservation property: For all non-triggered rules,
-   * Edit and Delete buttons are rendered without disabled attribute.
+   * Edit and Delete buttons are rendered.
    */
   describe('Template preservation', () => {
     let component: RulesPageComponent;
     let fixture: ComponentFixture<RulesPageComponent>;
-    let mockFacade: {
-      loadRules: ReturnType<typeof vi.fn>;
-      createRule: ReturnType<typeof vi.fn>;
-      updateRule: ReturnType<typeof vi.fn>;
-      deleteRule: ReturnType<typeof vi.fn>;
-      createRuleGroup: ReturnType<typeof vi.fn>;
-      rules$: BehaviorSubject<Rule[]>;
-      ruleGroups$: BehaviorSubject<RuleGroup[]>;
-      isLoading$: BehaviorSubject<boolean>;
-      error$: BehaviorSubject<string | null>;
-    };
+    let mockFacade: ReturnType<typeof buildMockFacade>;
 
     beforeEach(async () => {
-      mockFacade = {
-        loadRules: vi.fn(),
-        createRule: vi.fn(),
-        updateRule: vi.fn(),
-        deleteRule: vi.fn(),
-        createRuleGroup: vi.fn(),
-        rules$: new BehaviorSubject<Rule[]>([]),
-        ruleGroups$: new BehaviorSubject<RuleGroup[]>([]),
-        isLoading$: new BehaviorSubject<boolean>(false),
-        error$: new BehaviorSubject<string | null>(null),
-      };
-
-      await TestBed.configureTestingModule({
-        imports: [RulesPageComponent],
-        providers: [{ provide: RulesFacade, useValue: mockFacade }],
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(RulesPageComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
+      mockFacade = buildMockFacade();
+      ({ component, fixture } = await createTestBed(mockFacade, new MockMatDialog()));
     });
 
-    it('Edit button is enabled for non-triggered rules', () => {
+    it('Edit button is rendered for non-triggered rules', () => {
       fc.assert(
         fc.property(nonTriggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse);
@@ -147,8 +160,9 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
           mockFacade.rules$.next([mapped]);
           fixture.detectChanges();
 
-          const editBtn: HTMLButtonElement | null =
-            fixture.nativeElement.querySelector('.rules-table__action-button--edit');
+          const editBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+            `button[aria-label="Edit rule for ${mapped.ticker}"]`,
+          );
           expect(editBtn).toBeTruthy();
           expect(editBtn!.disabled).toBe(false);
         }),
@@ -156,7 +170,7 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
       );
     });
 
-    it('Delete button is enabled for non-triggered rules', () => {
+    it('Delete button is rendered for non-triggered rules', () => {
       fc.assert(
         fc.property(nonTriggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse);
@@ -164,8 +178,9 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
           mockFacade.rules$.next([mapped]);
           fixture.detectChanges();
 
-          const deleteBtn: HTMLButtonElement | null =
-            fixture.nativeElement.querySelector('.rules-table__action-button--delete');
+          const deleteBtn: HTMLButtonElement | null = fixture.nativeElement.querySelector(
+            `button[aria-label="Delete rule for ${mapped.ticker}"]`,
+          );
           expect(deleteBtn).toBeTruthy();
           expect(deleteBtn!.disabled).toBe(false);
         }),
@@ -178,59 +193,38 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
    * **Validates: Requirements 3.1, 3.3**
    *
    * Component preservation property: For all non-triggered rules,
-   * showEditRule sets currentView to 'editRule' and editingRule to the rule.
+   * openEditDialog opens a MatDialog.
    */
-  describe('Component preservation - showEditRule', () => {
+  describe('Component preservation - openEditDialog', () => {
     let component: RulesPageComponent;
     let fixture: ComponentFixture<RulesPageComponent>;
-    let mockFacade: {
-      loadRules: ReturnType<typeof vi.fn>;
-      createRule: ReturnType<typeof vi.fn>;
-      updateRule: ReturnType<typeof vi.fn>;
-      deleteRule: ReturnType<typeof vi.fn>;
-      createRuleGroup: ReturnType<typeof vi.fn>;
-      rules$: BehaviorSubject<Rule[]>;
-      ruleGroups$: BehaviorSubject<RuleGroup[]>;
-      isLoading$: BehaviorSubject<boolean>;
-      error$: BehaviorSubject<string | null>;
-    };
+    let mockFacade: ReturnType<typeof buildMockFacade>;
+    let dialogSpy: MockMatDialog;
 
     beforeEach(async () => {
-      mockFacade = {
-        loadRules: vi.fn(),
-        createRule: vi.fn(),
-        updateRule: vi.fn(),
-        deleteRule: vi.fn(),
-        createRuleGroup: vi.fn(),
-        rules$: new BehaviorSubject<Rule[]>([]),
-        ruleGroups$: new BehaviorSubject<RuleGroup[]>([]),
-        isLoading$: new BehaviorSubject<boolean>(false),
-        error$: new BehaviorSubject<string | null>(null),
-      };
-
-      await TestBed.configureTestingModule({
-        imports: [RulesPageComponent],
-        providers: [{ provide: RulesFacade, useValue: mockFacade }],
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(RulesPageComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
+      mockFacade = buildMockFacade();
+      ({ component, fixture, dialogSpy } = await createTestBed(mockFacade, new MockMatDialog()));
     });
 
-    it('showEditRule opens the form for non-triggered rules', () => {
+    it('openEditDialog opens the dialog for non-triggered rules', () => {
       fc.assert(
         fc.property(nonTriggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse);
 
-          // Reset component state
-          component['currentView'] = 'none';
-          component['editingRule'] = null;
+          vi.mocked(dialogSpy.open).mockClear();
 
-          component['showEditRule'](mapped);
+          component['openEditDialog']({
+            id: mapped.id,
+            ticker: mapped.ticker,
+            field: mapped.field,
+            operator: mapped.operator,
+            targetValue: mapped.targetValue,
+            active: mapped.active,
+            triggered: mapped.triggered,
+            groupId: mapped.groupId,
+          });
 
-          expect(component['currentView']).toBe('editRule');
-          expect(component['editingRule']).toEqual(mapped);
+          expect(dialogSpy.open).toHaveBeenCalled();
         }),
         { numRuns: 20 },
       );
@@ -241,44 +235,17 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
    * **Validates: Requirements 3.2, 3.4**
    *
    * Component preservation property: For all non-triggered rules,
-   * confirmDelete sets isDeleteDialogOpen to true and ruleToDelete to the rule.
+   * confirmDelete opens a MatDialog.
    */
   describe('Component preservation - confirmDelete', () => {
     let component: RulesPageComponent;
     let fixture: ComponentFixture<RulesPageComponent>;
-    let mockFacade: {
-      loadRules: ReturnType<typeof vi.fn>;
-      createRule: ReturnType<typeof vi.fn>;
-      updateRule: ReturnType<typeof vi.fn>;
-      deleteRule: ReturnType<typeof vi.fn>;
-      createRuleGroup: ReturnType<typeof vi.fn>;
-      rules$: BehaviorSubject<Rule[]>;
-      ruleGroups$: BehaviorSubject<RuleGroup[]>;
-      isLoading$: BehaviorSubject<boolean>;
-      error$: BehaviorSubject<string | null>;
-    };
+    let mockFacade: ReturnType<typeof buildMockFacade>;
+    let dialogSpy: MockMatDialog;
 
     beforeEach(async () => {
-      mockFacade = {
-        loadRules: vi.fn(),
-        createRule: vi.fn(),
-        updateRule: vi.fn(),
-        deleteRule: vi.fn(),
-        createRuleGroup: vi.fn(),
-        rules$: new BehaviorSubject<Rule[]>([]),
-        ruleGroups$: new BehaviorSubject<RuleGroup[]>([]),
-        isLoading$: new BehaviorSubject<boolean>(false),
-        error$: new BehaviorSubject<string | null>(null),
-      };
-
-      await TestBed.configureTestingModule({
-        imports: [RulesPageComponent],
-        providers: [{ provide: RulesFacade, useValue: mockFacade }],
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(RulesPageComponent);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
+      mockFacade = buildMockFacade();
+      ({ component, fixture, dialogSpy } = await createTestBed(mockFacade, new MockMatDialog()));
     });
 
     it('confirmDelete opens the dialog for non-triggered rules', () => {
@@ -286,14 +253,20 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
         fc.property(nonTriggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse);
 
-          // Reset component state
-          component['isDeleteDialogOpen'] = false;
-          component['ruleToDelete'] = null;
+          vi.mocked(dialogSpy.open).mockClear();
 
-          component['confirmDelete'](mapped);
+          component['confirmDelete']({
+            id: mapped.id,
+            ticker: mapped.ticker,
+            field: mapped.field,
+            operator: mapped.operator,
+            targetValue: mapped.targetValue,
+            active: mapped.active,
+            triggered: mapped.triggered,
+            groupId: mapped.groupId,
+          });
 
-          expect(component['isDeleteDialogOpen']).toBe(true);
-          expect(component['ruleToDelete']).toEqual(mapped);
+          expect(dialogSpy.open).toHaveBeenCalled();
         }),
         { numRuns: 20 },
       );

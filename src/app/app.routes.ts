@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
-import { LayoutComponent } from './core/layout/layout.component';
+import { LayoutShellComponent } from './core/layout/layout-shell/layout-shell.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -13,7 +13,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    component: LayoutComponent,
+    component: LayoutShellComponent,
     canActivate: [authGuard],
     children: [
       {

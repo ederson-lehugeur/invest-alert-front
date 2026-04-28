@@ -1,24 +1,39 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MaterialModule } from '../../material/material.module';
+
+export interface ConfirmDialogData {
+  readonly title: string;
+  readonly message: string;
+  readonly confirmLabel?: string;
+  readonly cancelLabel?: string;
+}
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
+  imports: [MaterialModule],
   templateUrl: './confirm-dialog.component.html',
   styleUrl: './confirm-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmDialogComponent {
-  @Input({ required: true }) title = '';
-  @Input({ required: true }) message = '';
-  @Input({ required: true }) isOpen = false;
-  @Output() readonly confirmed = new EventEmitter<void>();
-  @Output() readonly cancelled = new EventEmitter<void>();
+  readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject(MatDialogRef<ConfirmDialogComponent>);
+
+  get confirmLabel(): string {
+    return this.data.confirmLabel ?? 'Confirm';
+  }
+
+  get cancelLabel(): string {
+    return this.data.cancelLabel ?? 'Cancel';
+  }
 
   onConfirm(): void {
-    this.confirmed.emit();
+    this.dialogRef.close(true);
   }
 
   onCancel(): void {
-    this.cancelled.emit();
+    this.dialogRef.close(false);
   }
 }

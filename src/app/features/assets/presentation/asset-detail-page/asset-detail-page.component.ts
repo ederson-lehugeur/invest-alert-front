@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/cor
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { AssetsFacade } from '../../application/assets.facade';
-import { LoadingIndicatorComponent } from '../../../../shared/components/loading-indicator/loading-indicator.component';
+import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
+import { MaterialModule } from '../../../../shared/material/material.module';
 
 @Component({
   selector: 'app-asset-detail-page',
   standalone: true,
-  imports: [AsyncPipe, DatePipe, DecimalPipe, RouterLink, LoadingIndicatorComponent, ErrorMessageComponent],
+  imports: [AsyncPipe, DatePipe, DecimalPipe, RouterLink, SkeletonLoaderComponent, ErrorMessageComponent, MaterialModule],
   templateUrl: './asset-detail-page.component.html',
   styleUrl: './asset-detail-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

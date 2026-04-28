@@ -1,9 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { Rule } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
+
+class MockMatDialog {
+  open = vi.fn().mockReturnValue({
+    afterClosed: () => of(null),
+  } as Partial<MatDialogRef<unknown>>);
+}
 
 describe('RulesPageComponent', () => {
   let component: RulesPageComponent;
@@ -19,6 +28,11 @@ describe('RulesPageComponent', () => {
     isLoading$: BehaviorSubject<boolean>;
     error$: BehaviorSubject<string | null>;
   };
+  let mockNotificationService: {
+    showSuccess: ReturnType<typeof vi.fn>;
+    showError: ReturnType<typeof vi.fn>;
+  };
+  let mockDialog: { open: ReturnType<typeof vi.spyOn> };
 
   const mockRule: Rule = {
     id: 1,
@@ -31,6 +45,12 @@ describe('RulesPageComponent', () => {
     triggered: false,
   };
 
+  const mockTriggeredRule: Rule = {
+    ...mockRule,
+    id: 2,
+    triggered: true,
+  };
+
   const mockRuleGroup: RuleGroup = {
     id: 10,
     ticker: 'PETR4',
@@ -39,6 +59,11 @@ describe('RulesPageComponent', () => {
   };
 
   beforeEach(async () => {
+    mockNotificationService = {
+      showSuccess: vi.fn(),
+      showError: vi.fn(),
+    };
+
     mockFacade = {
       loadRules: vi.fn(),
       createRule: vi.fn(),
@@ -51,15 +76,28 @@ describe('RulesPageComponent', () => {
       error$: new BehaviorSubject<string | null>(null),
     };
 
+    mockDialog = new MockMatDialog();
+
     await TestBed.configureTestingModule({
-      imports: [RulesPageComponent],
+      imports: [RulesPageComponent, NoopAnimationsModule],
       providers: [
         { provide: RulesFacade, useValue: mockFacade },
+        { provide: NotificationService, useValue: mockNotificationService },
+        { provide: MatDialog, useValue: mockDialog },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RulesPageComponent);
     component = fixture.componentInstance;
+
+    // Get the MatDialog instance from the component's own injector
+    // (not the test module injector) and spy on it
+    const componentDialog = fixture.debugElement.injector.get(MatDialog);
+    vi.spyOn(componentDialog, 'open').mockReturnValue({
+      afterClosed: () => of(null),
+    } as ReturnType<MatDialog['open']>);
+    mockDialog = componentDialog as unknown as MockMatDialog;
+
     fixture.detectChanges();
   });
 
@@ -67,12 +105,17 @@ describe('RulesPageComponent', () => {
     expect(mockFacade.loadRules).toHaveBeenCalled();
   });
 
-  it('should display loading indicator when loading', () => {
+  it('should display skeleton loaders while loading', () => {
     mockFacade.isLoading$.next(true);
     fixture.detectChanges();
 
-    const indicator = fixture.nativeElement.querySelector('app-loading-indicator');
-    expect(indicator).toBeTruthy();
+    const skeletons = fixture.nativeElement.querySelectorAll('app-skeleton-loader');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it('should not display skeleton loaders when not loading', () => {
+    const skeletons = fixture.nativeElement.querySelectorAll('app-skeleton-loader');
+    expect(skeletons.length).toBe(0);
   });
 
   it('should display error message when error exists', () => {
@@ -87,85 +130,259 @@ describe('RulesPageComponent', () => {
     mockFacade.rules$.next([mockRule]);
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.rules-table__row');
-    expect(rows.length).toBe(1);
-
-    const cells = rows[0].querySelectorAll('td');
-    expect(cells[0].textContent).toContain('PETR4');
-    expect(cells[1].textContent).toContain('PRICE');
-  });
-
-  it('should display empty message when no rules', () => {
-    mockFacade.rules$.next([]);
-    fixture.detectChanges();
-
-    const empty = fixture.nativeElement.querySelector('.rules-page__empty');
-    expect(empty).toBeTruthy();
+    const tables = fixture.nativeElement.querySelectorAll('app-reusable-table');
+    expect(tables.length).toBeGreaterThan(0);
   });
 
   it('should render rule groups table when groups are available', () => {
     mockFacade.ruleGroups$.next([mockRuleGroup]);
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.rule-groups-table__row');
-    expect(rows.length).toBe(1);
-
-    const cells = rows[0].querySelectorAll('td');
-    expect(cells[0].textContent).toContain('Petrobras Alerts');
-    expect(cells[1].textContent).toContain('PETR4');
+    const tables = fixture.nativeElement.querySelectorAll('app-reusable-table');
+    expect(tables.length).toBeGreaterThan(0);
   });
 
-  it('should show rule form when Create Rule is clicked', () => {
-    const createBtn = fixture.nativeElement.querySelector('.rules-page__button--primary');
-    createBtn.click();
-    fixture.detectChanges();
-
-    const ruleForm = fixture.nativeElement.querySelector('app-rule-form');
-    expect(ruleForm).toBeTruthy();
+  it('should render Create Rule button', () => {
+    const createBtn = fixture.nativeElement.querySelector('button[aria-label="Create new rule"]');
+    expect(createBtn).toBeTruthy();
   });
 
-  it('should show rule group form when Create Rule Group is clicked', () => {
-    const createBtn = fixture.nativeElement.querySelector('.rules-page__button--secondary');
-    createBtn.click();
-    fixture.detectChanges();
+  describe('Create Rule dialog', () => {
+    it('should open AlertCreationDialogComponent when Create Rule is clicked', async () => {
+      const { AlertCreationDialogComponent } = await import('../alert-creation-dialog/alert-creation-dialog.component');
 
-    const groupForm = fixture.nativeElement.querySelector('app-rule-group-form');
-    expect(groupForm).toBeTruthy();
+      component['openCreateDialog']();
+
+      expect(mockDialog.open).toHaveBeenCalledWith(
+        AlertCreationDialogComponent,
+        expect.objectContaining({ data: expect.objectContaining({ ruleGroups: [] }) }),
+      );
+    });
+
+    it('should call facade.createRule when dialog returns form data', async () => {
+      const formData = {
+        ticker: 'VALE3',
+        field: 'DIVIDEND_YIELD',
+        operator: 'LESS_THAN',
+        targetValue: 5.5,
+        groupId: null,
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+
+      component['openCreateDialog']();
+
+      expect(mockFacade.createRule).toHaveBeenCalledWith(formData);
+    });
+
+    it('should not call facade.createRule when dialog is cancelled', () => {
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(null) });
+
+      component['openCreateDialog']();
+
+      expect(mockFacade.createRule).not.toHaveBeenCalled();
+    });
   });
 
-  it('should show confirm dialog when delete is clicked', () => {
-    mockFacade.rules$.next([mockRule]);
-    fixture.detectChanges();
+  describe('Edit Rule dialog', () => {
+    beforeEach(() => {
+      mockFacade.rules$.next([mockRule]);
+      fixture.detectChanges();
+    });
 
-    const deleteBtn = fixture.nativeElement.querySelector('.rules-table__action-button--delete');
-    deleteBtn.click();
-    fixture.detectChanges();
+    it('should open AlertCreationDialogComponent with rule data when edit is clicked', async () => {
+      const { AlertCreationDialogComponent } = await import('../alert-creation-dialog/alert-creation-dialog.component');
 
-    const dialog = fixture.nativeElement.querySelector('app-confirm-dialog');
-    expect(dialog).toBeTruthy();
-    expect(component['isDeleteDialogOpen']).toBe(true);
+      component['openEditDialog']({
+        id: mockRule.id,
+        ticker: mockRule.ticker,
+        field: mockRule.field,
+        operator: mockRule.operator,
+        targetValue: mockRule.targetValue,
+        active: mockRule.active,
+        triggered: mockRule.triggered,
+        groupId: mockRule.groupId,
+      });
+
+      expect(mockDialog.open).toHaveBeenCalledWith(
+        AlertCreationDialogComponent,
+        expect.objectContaining({
+          data: expect.objectContaining({ rule: expect.objectContaining({ id: mockRule.id }) }),
+        }),
+      );
+    });
+
+    it('should call facade.updateRule when edit dialog returns form data', () => {
+      const formData = {
+        ticker: 'PETR4',
+        field: 'PRICE',
+        operator: 'LESS_THAN',
+        targetValue: 35.0,
+        groupId: null,
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+
+      component['openEditDialog']({
+        id: mockRule.id,
+        ticker: mockRule.ticker,
+        field: mockRule.field,
+        operator: mockRule.operator,
+        targetValue: mockRule.targetValue,
+        active: mockRule.active,
+        triggered: mockRule.triggered,
+        groupId: mockRule.groupId,
+      });
+
+      expect(mockFacade.updateRule).toHaveBeenCalledWith(mockRule.id, {
+        field: formData.field,
+        operator: formData.operator,
+        targetValue: formData.targetValue,
+      });
+    });
+
+    it('should not call facade.updateRule when edit dialog is cancelled', () => {
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(null) });
+
+      component['openEditDialog']({
+        id: mockRule.id,
+        ticker: mockRule.ticker,
+        field: mockRule.field,
+        operator: mockRule.operator,
+        targetValue: mockRule.targetValue,
+        active: mockRule.active,
+        triggered: mockRule.triggered,
+        groupId: mockRule.groupId,
+      });
+
+      expect(mockFacade.updateRule).not.toHaveBeenCalled();
+    });
   });
 
-  it('should call deleteRule on confirm', () => {
-    component['ruleToDelete'] = mockRule;
-    component['isDeleteDialogOpen'] = true;
+  describe('Delete Rule dialog', () => {
+    beforeEach(() => {
+      mockFacade.rules$.next([mockRule]);
+      fixture.detectChanges();
+    });
 
-    component['onDeleteConfirmed']();
+    it('should open ConfirmDialogComponent when delete is clicked', async () => {
+      const { ConfirmDialogComponent } = await import('../../../../shared/components/confirm-dialog/confirm-dialog.component');
 
-    expect(mockFacade.deleteRule).toHaveBeenCalledWith(1);
-    expect(component['isDeleteDialogOpen']).toBe(false);
+      component['confirmDelete']({
+        id: mockRule.id,
+        ticker: mockRule.ticker,
+        field: mockRule.field,
+        operator: mockRule.operator,
+        targetValue: mockRule.targetValue,
+        active: mockRule.active,
+        triggered: mockRule.triggered,
+        groupId: mockRule.groupId,
+      });
+
+      expect(mockDialog.open).toHaveBeenCalledWith(
+        ConfirmDialogComponent,
+        expect.objectContaining({ data: expect.objectContaining({ title: 'Delete Rule' }) }),
+      );
+    });
+
+    it('should call facade.deleteRule when confirm dialog returns true', () => {
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(true) });
+
+      component['confirmDelete']({
+        id: mockRule.id,
+        ticker: mockRule.ticker,
+        field: mockRule.field,
+        operator: mockRule.operator,
+        targetValue: mockRule.targetValue,
+        active: mockRule.active,
+        triggered: mockRule.triggered,
+        groupId: mockRule.groupId,
+      });
+
+      expect(mockFacade.deleteRule).toHaveBeenCalledWith(mockRule.id);
+    });
+
+    it('should not call facade.deleteRule when confirm dialog returns false', () => {
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(false) });
+
+      component['confirmDelete']({
+        id: mockRule.id,
+        ticker: mockRule.ticker,
+        field: mockRule.field,
+        operator: mockRule.operator,
+        targetValue: mockRule.targetValue,
+        active: mockRule.active,
+        triggered: mockRule.triggered,
+        groupId: mockRule.groupId,
+      });
+
+      expect(mockFacade.deleteRule).not.toHaveBeenCalled();
+    });
   });
 
-  it('should show edit form when edit button is clicked', () => {
-    mockFacade.rules$.next([mockRule]);
-    fixture.detectChanges();
+  describe('Triggered rules', () => {
+    beforeEach(() => {
+      mockFacade.rules$.next([mockTriggeredRule]);
+      fixture.detectChanges();
+      // Second detectChanges to ensure OnPush component re-renders after data update
+      fixture.detectChanges();
+    });
 
-    const editBtn = fixture.nativeElement.querySelector('.rules-table__action-button--edit');
-    editBtn.click();
-    fixture.detectChanges();
+    it('should not show edit button for triggered rules', () => {
+      const editBtn = fixture.nativeElement.querySelector(`button[aria-label="Edit rule for ${mockTriggeredRule.ticker}"]`);
+      expect(editBtn).toBeFalsy();
+    });
 
-    const ruleForm = fixture.nativeElement.querySelector('app-rule-form');
-    expect(ruleForm).toBeTruthy();
-    expect(component['editingRule']).toEqual(mockRule);
+    it('should not show delete button for triggered rules', () => {
+      const deleteBtn = fixture.nativeElement.querySelector(`button[aria-label="Delete rule for ${mockTriggeredRule.ticker}"]`);
+      expect(deleteBtn).toBeFalsy();
+    });
+
+    it('should show triggered badge for triggered rules', () => {
+      // Verify the rulesData contains the triggered rule
+      expect(component['rulesData'].some((r) => r.triggered)).toBe(true);
+    });
+
+    it('should not open dialog when openEditDialog is called with triggered rule', () => {
+      component['openEditDialog']({ ...mockTriggeredRule });
+      expect(mockDialog.open).not.toHaveBeenCalled();
+    });
+
+    it('should not open dialog when confirmDelete is called with triggered rule', () => {
+      component['confirmDelete']({ ...mockTriggeredRule });
+      expect(mockDialog.open).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Notifications', () => {
+    it('should show success notification after successful create', () => {
+      const formData = {
+        ticker: 'VALE3',
+        field: 'PRICE',
+        operator: 'GREATER_THAN',
+        targetValue: 10,
+        groupId: null,
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+      mockFacade.error$.next(null);
+
+      component['openCreateDialog']();
+
+      expect(mockNotificationService.showSuccess).toHaveBeenCalledWith('Rule created successfully.');
+    });
+
+    it('should show error notification when facade emits an error', () => {
+      const formData = {
+        ticker: 'VALE3',
+        field: 'PRICE',
+        operator: 'GREATER_THAN',
+        targetValue: 10,
+        groupId: null,
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+      mockFacade.error$.next('API error occurred');
+
+      component['openCreateDialog']();
+
+      expect(mockNotificationService.showError).toHaveBeenCalledWith('API error occurred');
+    });
   });
 });

@@ -1,0 +1,38 @@
+<div class="skeleton-container" [attr.aria-busy]="true" role="status" aria-label="Loading content">
+  @for (item of items; track item) {
+    <!-- Card variant: rectangle + circle + text lines -->
+    @if (variant === 'card') {
+      <div class="skeleton-card">
+        <div class="skeleton-card__header">
+          <div class="skeleton-element skeleton-circle"></div>
+          <div class="skeleton-element skeleton-line skeleton-line--short"></div>
+        </div>
+        <div class="skeleton-element skeleton-rect"></div>
+        <div class="skeleton-card__body">
+          <div class="skeleton-element skeleton-line skeleton-line--full"></div>
+          <div class="skeleton-element skeleton-line skeleton-line--medium"></div>
+        </div>
+      </div>
+    }
+
+    <!-- Table-row variant: row of rectangular cells -->
+    @if (variant === 'table-row') {
+      <div class="skeleton-table-row">
+        <div class="skeleton-element skeleton-cell"></div>
+        <div class="skeleton-element skeleton-cell skeleton-cell--wide"></div>
+        <div class="skeleton-element skeleton-cell"></div>
+        <div class="skeleton-element skeleton-cell"></div>
+        <div class="skeleton-element skeleton-cell skeleton-cell--narrow"></div>
+      </div>
+    }
+
+    <!-- Text variant: lines of varying width -->
+    @if (variant === 'text') {
+      <div class="skeleton-text">
+        <div class="skeleton-element skeleton-line skeleton-line--full"></div>
+        <div class="skeleton-element skeleton-line skeleton-line--long"></div>
+        <div class="skeleton-element skeleton-line skeleton-line--medium"></div>
+      </div>
+    }
+  }
+</div>

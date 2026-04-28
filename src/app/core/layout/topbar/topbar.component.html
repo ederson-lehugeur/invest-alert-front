@@ -1,0 +1,31 @@
+<mat-toolbar class="topbar">
+  @if (isMobile()) {
+    <button
+      mat-icon-button
+      aria-label="Toggle menu"
+      (click)="onMenuToggle()"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
+
+  <span class="app-name">InvestAlert</span>
+
+  <span class="spacer"></span>
+
+  <button
+    mat-icon-button
+    [attr.aria-label]="themeService.isDarkMode() ? 'Switch to light mode' : 'Switch to dark mode'"
+    (click)="onToggleTheme()"
+  >
+    <mat-icon>{{ themeService.isDarkMode() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+
+  <button
+    mat-icon-button
+    aria-label="Logout"
+    (click)="onLogout()"
+  >
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>

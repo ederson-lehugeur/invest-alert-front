@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { provideRouter } from '@angular/router';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { AssetDetailPageComponent } from './asset-detail-page.component';
 import { AssetsFacade } from '../../application/assets.facade';
 import { Asset } from '../../domain/models/asset.model';
@@ -58,6 +59,7 @@ describe('AssetDetailPageComponent', () => {
       imports: [AssetDetailPageComponent],
       providers: [
         provideRouter([]),
+        provideNoopAnimations(),
         { provide: AssetsFacade, useValue: mockFacade },
       ],
     }).compileComponents();
@@ -68,28 +70,49 @@ describe('AssetDetailPageComponent', () => {
     expect(mockFacade.loadAssetByTicker).toHaveBeenCalledWith('PETR4');
   });
 
-  it('should display loading indicator when loading', () => {
+  it('should display skeleton loader when loading', () => {
     createComponent();
     mockFacade.isLoading$.next(true);
     fixture.detectChanges();
 
-    const indicator = fixture.nativeElement.querySelector('app-loading-indicator');
-    expect(indicator).toBeTruthy();
+    const skeleton = fixture.nativeElement.querySelector('app-skeleton-loader');
+    expect(skeleton).toBeTruthy();
   });
 
-  it('should display asset details when loaded', () => {
+  it('should display asset details in a mat-card when loaded', () => {
     createComponent();
     mockFacade.selectedAsset$.next(mockAsset);
     fixture.detectChanges();
 
-    const title = fixture.nativeElement.querySelector('.asset-card__title');
+    const card = fixture.nativeElement.querySelector('mat-card');
+    expect(card).toBeTruthy();
+
+    const title = fixture.nativeElement.querySelector('mat-card-title');
     expect(title.textContent).toContain('PETR4');
 
-    const name = fixture.nativeElement.querySelector('.asset-card__name');
-    expect(name.textContent).toContain('Petrobras PN');
+    const subtitle = fixture.nativeElement.querySelector('mat-card-subtitle');
+    expect(subtitle.textContent).toContain('Petrobras PN');
 
     const details = fixture.nativeElement.querySelectorAll('.detail-row dd');
     expect(details.length).toBe(4);
+  });
+
+  it('should apply positive class for positive dividend yield', () => {
+    createComponent();
+    mockFacade.selectedAsset$.next(mockAsset);
+    fixture.detectChanges();
+
+    const dividendDd = fixture.nativeElement.querySelectorAll('.detail-row dd')[1];
+    expect(dividendDd.classList.contains('positive')).toBe(true);
+  });
+
+  it('should apply negative class for negative dividend yield', () => {
+    createComponent();
+    mockFacade.selectedAsset$.next({ ...mockAsset, dividendYield: -2.5 });
+    fixture.detectChanges();
+
+    const dividendDd = fixture.nativeElement.querySelectorAll('.detail-row dd')[1];
+    expect(dividendDd.classList.contains('negative')).toBe(true);
   });
 
   it('should display error message on error', () => {
@@ -113,10 +136,14 @@ describe('AssetDetailPageComponent', () => {
     expect(notFound.textContent).toContain('Asset not found');
   });
 
-  it('should have a back link to assets page', () => {
+  it('should have a back button with mat-icon linking to assets page', () => {
     createComponent();
-    const backLink = fixture.nativeElement.querySelector('.asset-detail__back');
-    expect(backLink).toBeTruthy();
-    expect(backLink.getAttribute('href')).toBe('/assets');
+    const backButton = fixture.nativeElement.querySelector('.asset-detail__back');
+    expect(backButton).toBeTruthy();
+    expect(backButton.tagName.toLowerCase()).toBe('button');
+
+    const icon = backButton.querySelector('mat-icon');
+    expect(icon).toBeTruthy();
+    expect(icon.textContent.trim()).toBe('arrow_back');
   });
 });

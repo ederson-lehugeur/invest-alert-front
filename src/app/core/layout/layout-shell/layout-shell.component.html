@@ -1,0 +1,17 @@
+<mat-sidenav-container class="shell-container">
+  <mat-sidenav
+    [mode]="sidenavMode()"
+    [opened]="sidenavOpened()"
+    (openedChange)="sidenavOpened.set($event)"
+  >
+    <app-sidebar (linkClicked)="onSidebarLinkClicked()" />
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <app-topbar (menuToggle)="toggleSidenav()" />
+    <main role="main" class="main-content">
+      <div [@routeAnimations]="outlet.isActivated">
+        <router-outlet #outlet="outlet" />
+      </div>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

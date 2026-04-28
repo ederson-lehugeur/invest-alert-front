@@ -1,133 +1,75 @@
 <div class="rules-page">
-  <h1 class="rules-page__title">Rules</h1>
+  <div class="rules-page__header">
+    <h1 class="mat-headline-medium">Rules</h1>
+    <button mat-flat-button color="primary" (click)="openCreateDialog()" aria-label="Create new rule">
+      <mat-icon>add</mat-icon>
+      Create Rule
+    </button>
+  </div>
 
   <app-error-message [message]="(facade.error$ | async) ?? null" />
 
-  @if (facade.isLoading$ | async) {
-    <app-loading-indicator />
-  }
-
-  @if (currentView === 'none') {
-    <div class="rules-page__actions">
-      <button class="rules-page__button rules-page__button--primary" (click)="showCreateRule()">
-        Create Rule
-      </button>
-      <button class="rules-page__button rules-page__button--secondary" (click)="showCreateRuleGroup()">
-        Create Rule Group
-      </button>
-    </div>
-  }
-
-  @if (currentView === 'createRule' || currentView === 'editRule') {
-    <app-rule-form
-      [rule]="editingRule"
-      [error]="(facade.error$ | async) ?? null"
-      [ruleGroups]="(facade.ruleGroups$ | async) ?? []"
-      (formSubmit)="onRuleFormSubmit($event)"
-      (formCancel)="closeForm()"
-    />
-  }
-
-  @if (currentView === 'createRuleGroup') {
-    <app-rule-group-form
-      [error]="(facade.error$ | async) ?? null"
-      (formSubmit)="onRuleGroupFormSubmit($event)"
-      (formCancel)="closeForm()"
-    />
-  }
-
+  <!-- Individual Rules Section -->
   <section class="rules-page__section">
-    <h2>Individual Rules</h2>
-    @if (facade.rules$ | async; as rules) {
-      @if (rules.length > 0) {
-        <div class="table-wrapper">
-          <table class="rules-table">
-            <thead>
-              <tr>
-                <th>Ticker</th>
-                <th>Field</th>
-                <th>Operator</th>
-                <th class="text-right">Target Value</th>
-                <th>Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (rule of rules; track rule.id) {
-                <tr class="rules-table__row">
-                  <td>{{ rule.ticker }}</td>
-                  <td>{{ rule.field }}</td>
-                  <td>{{ rule.operator }}</td>
-                  <td class="text-right">{{ rule.targetValue }}</td>
-                  <td>{{ rule.active ? 'Yes' : 'No' }}</td>
-                  @if (!rule.triggered) {
-                    <td class="rules-table__actions">
-                      <button
-                        class="rules-table__action-button rules-table__action-button--edit"
-                        (click)="showEditRule(rule)"
-                        [attr.aria-label]="'Edit rule for ' + rule.ticker"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        class="rules-table__action-button rules-table__action-button--delete"
-                        (click)="confirmDelete(rule)"
-                        [attr.aria-label]="'Delete rule for ' + rule.ticker"
-                      >
-                        Delete
-                      </button>
-                  </td>
-                  } @else {
-                    <td class="text-right">
-                      <span class="text-right">--</span>
-                    </td>
-                  }
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="rules-page__empty">No individual rules found.</p>
-      }
+    <h2 class="mat-title-large">Individual Rules</h2>
+
+    @if (facade.isLoading$ | async) {
+      <app-skeleton-loader variant="table-row" [count]="5" />
+    } @else {
+      <app-reusable-table
+        [columns]="rulesColumns"
+        [data]="rulesData"
+        [trackByFn]="trackRuleById"
+        emptyIcon="rule"
+        emptyMessage="No individual rules found."
+      >
+        <ng-template appCellDef="active" let-row>
+          <mat-icon [class]="row.active ? 'icon--positive' : 'icon--neutral'">
+            {{ row.active ? 'check_circle' : 'cancel' }}
+          </mat-icon>
+        </ng-template>
+
+        <ng-template appCellDef="actions" let-row>
+          @if (!row.triggered) {
+            <div class="actions-cell">
+              <button
+                mat-icon-button
+                (click)="openEditDialog(row)"
+                [attr.aria-label]="'Edit rule for ' + row.ticker"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="confirmDelete(row)"
+                [attr.aria-label]="'Delete rule for ' + row.ticker"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          } @else {
+            <span class="triggered-badge">Triggered</span>
+          }
+        </ng-template>
+      </app-reusable-table>
     }
   </section>
 
+  <!-- Rule Groups Section -->
   <section class="rules-page__section">
-    <h2>Rule Groups</h2>
-    @if (facade.ruleGroups$ | async; as ruleGroups) {
-      @if (ruleGroups.length > 0) {
-        <div class="table-wrapper">
-          <table class="rule-groups-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Ticker</th>
-                <th class="text-right">Rules Count</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (group of ruleGroups; track group.id) {
-                <tr class="rule-groups-table__row">
-                  <td>{{ group.name }}</td>
-                  <td>{{ group.ticker }}</td>
-                  <td class="text-right">{{ group.rules.length }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="rules-page__empty">No rule groups found.</p>
-      }
+    <h2 class="mat-title-large">Rule Groups</h2>
+
+    @if (facade.isLoading$ | async) {
+      <app-skeleton-loader variant="table-row" [count]="3" />
+    } @else {
+      <app-reusable-table
+        [columns]="ruleGroupsColumns"
+        [data]="ruleGroupsData"
+        [trackByFn]="trackGroupById"
+        emptyIcon="folder_open"
+        emptyMessage="No rule groups found."
+      />
     }
   </section>
-
-  <app-confirm-dialog
-    title="Delete Rule"
-    message="Are you sure you want to delete this rule?"
-    [isOpen]="isDeleteDialogOpen"
-    (confirmed)="onDeleteConfirmed()"
-    (cancelled)="onDeleteCancelled()"
-  />
 </div>

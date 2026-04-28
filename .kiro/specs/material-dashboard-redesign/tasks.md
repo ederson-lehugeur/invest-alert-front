@@ -1,0 +1,294 @@
+# Implementation Plan: Material Dashboard Redesign
+
+## Overview
+
+Incrementally integrate Angular Material into the InvestAlert Angular 21 application, replacing the current top-navbar layout with a sidebar-based Material Design interface. The plan builds shared infrastructure first (dependencies, theme, services, shared components), then the layout shell, then migrates each feature page, and finally cleans up deprecated components.
+
+## Tasks
+
+- [x] 1. Install Angular Material dependencies and configure the application
+  - [x] 1.1 Add @angular/material and @angular/cdk to package.json and install
+    - Run `ng add @angular/material` or manually add `@angular/material` and `@angular/cdk` to dependencies in `package.json` and run `npm install`
+    - Add Material Icons font link to `src/index.html` (`<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">`)
+    - _Requirements: 1.1, 1.6_
+  - [x] 1.2 Configure provideAnimationsAsync in app.config.ts
+    - Import `provideAnimationsAsync` from `@angular/platform-browser/animations/async` and add it to the providers array in `src/app/app.config.ts`
+    - _Requirements: 1.4, 15.1_
+  - [x] 1.3 Create the MaterialModule barrel
+    - Create `src/app/shared/material/material.module.ts` as an NgModule that re-exports: MatToolbarModule, MatSidenavModule, MatCardModule, MatTableModule, MatPaginatorModule, MatSortModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSnackBarModule, MatDialogModule, MatIconModule, MatChipsModule, MatListModule, MatProgressSpinnerModule, MatButtonModule
+    - _Requirements: 10.1_
+  - [x] 1.4 Configure the Material theme and global styles in src/styles.scss
+    - Replace existing CSS variables and styles with Angular Material M3 theme using `mat.define-theme()` with violet primary and cyan tertiary palettes
+    - Define dark theme as default applied on `html`, light theme override on `html.light-theme`
+    - Add financial indicator CSS custom properties (`--color-positive`, `--color-negative`, etc.)
+    - Apply `mat.typography-hierarchy()` for typographic hierarchy
+    - Keep existing utility classes that don't conflict with Material
+    - Update `angular.json` production budgets if needed (Material increases bundle size)
+    - _Requirements: 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 2.5_
+  - [x] 1.5 Write unit tests for MaterialModule barrel exports
+    - Verify the module exports all required Material modules
+    - _Requirements: 10.1_
+
+- [x] 2. Implement core services (ThemeService, NotificationService, FilterStateService)
+  - [x] 2.1 Implement ThemeService
+    - Create `src/app/core/services/theme.service.ts` with signal-based `themeMode` and computed `isDarkMode`
+    - Implement `toggleTheme()`, `loadInitialTheme()`, and `applyTheme()` methods
+    - Guard localStorage access behind `isPlatformBrowser()` for SSR safety
+    - Default to dark mode when no preference is stored or during SSR
+    - Apply/remove `light-theme` CSS class on `<html>` element
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6_
+  - [x] 2.2 Write property test for theme toggle self-inverse
+    - **Property 1: Theme toggle self-inverse**
+    - For any initial ThemeMode, toggling twice returns to the original mode
+    - Use `fc.constantFrom('dark', 'light')` generator
+    - **Validates: Requirements 3.2**
+  - [x] 2.3 Write property test for theme persistence round-trip
+    - **Property 2: Theme persistence round-trip**
+    - For any valid ThemeMode, persisting and loading back produces the same value
+    - Use `fc.constantFrom('dark', 'light')` with mock localStorage
+    - **Validates: Requirements 3.3, 3.4**
+  - [x] 2.4 Implement NotificationService
+    - Create `src/app/core/services/notification.service.ts` wrapping MatSnackBar
+    - Implement `showSuccess(message)` with 3000ms duration and `showError(message)` with 5000ms duration and 'Dismiss' action
+    - _Requirements: 11.2, 11.3_
+  - [x] 2.5 Write property test for notification service configuration
+    - **Property 5: Notification service configuration correctness**
+    - For any non-empty message and type (success/error), verify snackbar config matches expected duration and action
+    - Use `fc.string({ minLength: 1 })` and `fc.constantFrom('success', 'error')` generators
+    - **Validates: Requirements 11.2, 11.3**
+  - [x] 2.6 Implement FilterStateService
+    - Create `src/app/core/services/filter-state.service.ts` with generic `save<T>()`, `load<T>()`, and `clear()` methods
+    - Guard localStorage access behind `isPlatformBrowser()` for SSR safety
+    - Return null on SSR or when key doesn't exist
+    - _Requirements: 7.5, 7.6_
+  - [x] 2.7 Write property test for filter state persistence round-trip
+    - **Property 4: Filter state persistence round-trip**
+    - For any valid AlertFilterState, saving and loading back produces an equivalent object
+    - Use `fc.record({ ticker: fc.string(), status: fc.constantFrom('', 'PENDING', 'SENT') })` generator
+    - **Validates: Requirements 7.5, 7.6**
+
+- [x] 3. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 4. Build shared reusable components
+  - [x] 4.1 Create SkeletonLoaderComponent
+    - Create `src/app/shared/components/skeleton-loader/` with component files
+    - Accept `variant: 'card' | 'table-row' | 'text'` and `count: number` inputs
+    - Implement CSS `@keyframes shimmer` animation on gradient backgrounds
+    - Render different shapes per variant: card (rectangle + circle + text lines), table-row (row of rectangular cells), text (lines of varying width)
+    - _Requirements: 5.3, 6.4, 7.7, 10.5_
+  - [x] 4.2 Create ReusableCardComponent
+    - Create `src/app/shared/components/reusable-card/` with component files
+    - Accept `title`, `icon`, and `elevated` inputs
+    - Use `<mat-card>` with `<ng-content>` for body projection
+    - Apply higher elevation when `elevated` is true
+    - _Requirements: 5.2, 10.2, 2.4_
+  - [x] 4.3 Create ReusableTableComponent
+    - Create `src/app/shared/components/reusable-table/` with component files
+    - Accept `ColumnConfig[]`, `data`, `sortable`, `paginator`, `pageSize`, `totalElements`, `pageIndex`, `trackByFn`, `rowClickable`, `emptyIcon`, `emptyMessage` inputs
+    - Emit `sortChange`, `pageChange`, `rowClick` outputs
+    - Wrap MatTable, MatSort, MatPaginator
+    - Support custom cell templates via `ng-template` with `let-row` context
+    - Display empty state with icon and message when data is empty
+    - Ensure rows are keyboard-navigable with appropriate aria-labels when `rowClickable` is true
+    - _Requirements: 10.3, 6.1, 6.2, 6.3, 6.5, 6.7, 7.1, 7.4, 14.2_
+  - [x] 4.4 Refactor ConfirmDialogComponent to use MatDialog
+    - Rewrite `src/app/shared/components/confirm-dialog/` to use `MAT_DIALOG_DATA` injection and `MatDialogRef`
+    - Accept `ConfirmDialogData` (title, message, confirmLabel, cancelLabel) via `MAT_DIALOG_DATA`
+    - Return `true` on confirm, `false` on cancel via `dialogRef.close()`
+    - Remove the old custom overlay implementation (template, SCSS)
+    - _Requirements: 10.4, 8.5, 14.5_
+  - [x] 4.5 Write unit tests for shared components
+    - Test SkeletonLoaderComponent renders correct variant shapes and respects count input
+    - Test ReusableCardComponent renders title, icon, and projected content
+    - Test ReusableTableComponent renders columns from config, emits sort/page/row events, shows empty state
+    - Test ConfirmDialogComponent returns true on confirm, false on cancel
+    - _Requirements: 10.2, 10.3, 10.4, 10.5_
+
+- [x] 5. Build layout shell and update routing
+  - [x] 5.1 Create SidebarComponent
+    - Create `src/app/core/layout/sidebar/` with component files
+    - Render 4 navigation links (Dashboard, Assets, Rules, Alerts) with Material icons and labels using `routerLink` and `routerLinkActive`
+    - Emit `linkClicked` output for mobile sidebar close behavior
+    - Use `<nav>` element with appropriate ARIA landmark role
+    - _Requirements: 4.1, 4.2, 4.3, 4.7, 14.4_
+  - [x] 5.2 Create TopbarComponent
+    - Create `src/app/core/layout/topbar/` with component files
+    - Display application name ("InvestAlert") and logout button using MatToolbar
+    - Include theme toggle button (dark/light icon swap) wired to ThemeService
+    - Include menu toggle button (hamburger icon) visible only on mobile, emitting `menuToggle` output
+    - Use BreakpointObserver to determine mobile state
+    - _Requirements: 4.4, 4.5, 3.2, 14.3_
+  - [x] 5.3 Create LayoutShellComponent
+    - Create `src/app/core/layout/layout-shell/` with component files
+    - Use `<mat-sidenav-container>` with `<mat-sidenav>` containing SidebarComponent and `<mat-sidenav-content>` containing TopbarComponent + `<router-outlet>`
+    - Use BreakpointObserver to toggle sidenav mode ('side' on desktop, 'over' on mobile <768px) and opened state
+    - Close sidebar on mobile when a nav link is clicked
+    - Wrap `<router-outlet>` in `<main role="main">` for accessibility
+    - _Requirements: 4.1, 4.6, 4.7, 12.1, 14.4_
+  - [x] 5.4 Update app.routes.ts to use LayoutShellComponent
+    - Replace `LayoutComponent` import with `LayoutShellComponent` in `src/app/app.routes.ts`
+    - Update the authenticated route's `component` property to `LayoutShellComponent`
+    - _Requirements: 4.1_
+  - [x] 5.5 Write unit tests for layout components
+    - Test SidebarComponent renders 4 nav links with correct icons and paths
+    - Test TopbarComponent renders app name, logout button, theme toggle; menu button visible on mobile
+    - Test LayoutShellComponent sidebar mode changes at 768px breakpoint
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+
+- [x] 6. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 7. Build DashboardFacade and migrate Dashboard page
+  - [x] 7.1 Create DashboardFacade
+    - Create `src/app/features/dashboard/application/dashboard.facade.ts`
+    - Implement `loadDashboard()` using `forkJoin` with 4 parallel API calls: `assetsApi.list(0, 1)` for totalElements, `alertsApi.list({status: 'PENDING'}, 0, 1)` for pending count, `alertsApi.list({status: 'SENT'}, 0, 1)` for sent count, `alertsApi.list({}, 0, 5)` for recent alerts
+    - Expose observables: `totalAssets$`, `pendingAlerts$`, `sentAlerts$`, `recentAlerts$`, `isLoading$`, `error$`
+    - Handle errors via ErrorHandlerService
+    - _Requirements: 5.1, 5.4, 5.5_
+  - [x] 7.2 Migrate DashboardPageComponent to Material
+    - Rewrite `src/app/features/dashboard/presentation/dashboard-page/` to use DashboardFacade
+    - Display 3 summary cards (Total Assets, Pending Alerts, Sent Alerts) using ReusableCardComponent with elevated styling, icons, and numeric values
+    - Show SkeletonLoaderComponent (variant: 'card', count: 3) while loading
+    - Display "Recent Alerts" section with 5 most recent alerts in a compact MatList or MatTable
+    - Show error via NotificationService.showError() on API failure
+    - Use responsive grid: 3 columns desktop, 2 tablet, 1 mobile
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 12.3_
+  - [x] 7.3 Write unit tests for DashboardFacade and DashboardPageComponent
+    - Test DashboardFacade correctly aggregates totalElements from API responses
+    - Test DashboardFacade error state on API failure
+    - Test DashboardPageComponent shows skeleton loaders while loading, summary cards when loaded, recent alerts list
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+
+- [x] 8. Migrate Assets pages to Material
+  - [x] 8.1 Migrate AssetsPageComponent to Material
+    - Rewrite `src/app/features/assets/presentation/assets-page/` to use ReusableTableComponent
+    - Configure columns: Ticker, Name, Price (right-aligned), Dividend Yield (right-aligned), P/VP (right-aligned), Updated At
+    - Enable MatPaginator for server-side pagination (emit pageChange to facade)
+    - Enable MatSort for client-side sorting on numeric columns (Price, Dividend Yield, P/VP) within current page data
+    - Show SkeletonLoaderComponent (variant: 'table-row') while loading
+    - Show empty state with icon and message when no assets
+    - Navigate to asset detail on row click
+    - Ensure rows are keyboard-navigable with aria-labels
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 14.2_
+  - [x] 8.2 Write property test for client-side asset sorting
+    - **Property 3: Client-side asset sorting correctness**
+    - For any non-empty array of Asset objects and any valid sortable column with any direction, verify ordering invariant holds for consecutive pairs
+    - Use `fc.array(fc.record({...}))` with `fc.constantFrom('currentPrice', 'dividendYield', 'pVp')` and `fc.constantFrom('asc', 'desc')` generators
+    - **Validates: Requirements 6.3**
+  - [x] 8.3 Migrate AssetDetailPageComponent to Material styling
+    - Update `src/app/features/assets/presentation/asset-detail-page/` to use MatCard for the asset detail card
+    - Use Material typography and spacing
+    - Replace the back link with a MatButton with mat-icon
+    - Apply financial indicator colors (green for positive dividend yield, etc.) where appropriate
+    - _Requirements: 2.2, 2.3_
+  - [x] 8.4 Write unit tests for AssetsPageComponent
+    - Test renders MatTable with correct columns
+    - Test navigates on row click
+    - Test shows empty state
+    - Test shows skeleton loaders while loading
+    - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.6_
+
+- [x] 9. Migrate Alerts page to Material
+  - [x] 9.1 Migrate AlertsPageComponent to Material
+    - Rewrite `src/app/features/alerts/presentation/alerts-page/` to use ReusableTableComponent
+    - Configure columns: Ticker, Status, Details, Created At, Sent At
+    - Replace filter inputs with MatFormField + MatInput for ticker and MatSelect for status (All, PENDING, SENT)
+    - Enable MatPaginator for server-side pagination
+    - Display alert status using MatChip with green color for SENT and amber for PENDING
+    - Show SkeletonLoaderComponent (variant: 'table-row') while loading
+    - Show empty state message when no alerts match filters
+    - Integrate FilterStateService to persist and restore filter values on page load
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9_
+  - [x] 9.2 Write unit tests for AlertsPageComponent
+    - Test renders filter controls (MatInput, MatSelect)
+    - Test restores filters from localStorage via FilterStateService
+    - Test shows status chips with correct colors
+    - Test shows skeleton loaders while loading
+    - Test shows empty state when no alerts match
+    - _Requirements: 7.1, 7.2, 7.5, 7.6, 7.7, 7.8, 7.9_
+
+- [x] 10. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 11. Build AlertCreationDialog and migrate Rules page to Material
+  - [x] 11.1 Create AlertCreationDialogComponent
+    - Create `src/app/features/rules/presentation/alert-creation-dialog/` with component files
+    - Use MatDialog with `MAT_DIALOG_DATA` injection accepting `AlertCreationDialogData` (optional rule for edit mode, ruleGroups list)
+    - Build reactive form with MatFormField/MatInput for Ticker, MatSelect for Field (PRICE, DIVIDEND_YIELD, P_VP), MatSelect for Operator, MatInput[type=number] for Target Value, MatSelect for optional Rule Group
+    - Validate required fields and display inline errors via `<mat-error>`
+    - Pre-populate form in edit mode; disable ticker field in edit mode
+    - Disable submit button and show MatProgressSpinner while submission is in progress
+    - Close dialog with form data on success, close with null on cancel
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 11.4_
+  - [x] 11.2 Write property test for alert creation form validation
+    - **Property 6: Alert creation form validation**
+    - For any combination of form field values, form is valid iff ticker is non-empty, field is valid RuleField, operator is valid ComparisonOperator, and targetValue is a number
+    - Use `fc.record({...})` with mix of valid and invalid values
+    - **Validates: Requirements 9.2**
+  - [x] 11.3 Migrate RulesPageComponent to Material
+    - Rewrite `src/app/features/rules/presentation/rules-page/` to use ReusableTableComponent for both individual rules and rule groups tables
+    - Configure rules table columns: Ticker, Field, Operator, Target Value (right-aligned), Active, Actions
+    - Configure rule groups table columns: Name, Ticker, Rules Count (right-aligned)
+    - Replace inline form views with MatDialog: open AlertCreationDialogComponent on "Create Rule" and "Edit" clicks
+    - Replace custom ConfirmDialogComponent usage with MatDialog-based ConfirmDialogComponent on "Delete" clicks
+    - On successful create/update/delete, call NotificationService.showSuccess()
+    - On failed operations, call NotificationService.showError()
+    - Remove old RuleFormComponent and RuleGroupFormComponent inline form usage (forms now live in dialogs)
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
+  - [x] 11.4 Write unit tests for AlertCreationDialog and RulesPageComponent
+    - Test AlertCreationDialogComponent pre-populates in edit mode, disables submit while submitting, closes on cancel
+    - Test RulesPageComponent opens dialog on create/edit, opens confirm dialog on delete, shows snackbar on success/error
+    - _Requirements: 8.3, 8.4, 8.5, 8.6, 8.7, 9.1, 9.2, 9.3, 9.4, 9.5_
+
+- [x] 12. Add route transition animations and hover microinteractions
+  - [x] 12.1 Add route fade-in transition animation
+    - Define a route animation trigger in a shared animations file (e.g., `src/app/shared/animations/route-animations.ts`)
+    - Apply the animation to the `<router-outlet>` in LayoutShellComponent using `@routeAnimations` trigger
+    - Use a fade-in transition under 300ms duration
+    - _Requirements: 15.2, 15.4, 15.5_
+  - [x] 12.2 Add hover microinteractions to cards and table rows
+    - Add subtle elevation transition on MatCard hover (CSS transition on `box-shadow`)
+    - Add subtle background transition on table row hover
+    - Ensure sidebar slide animation works via MatSidenav's built-in animation
+    - Keep all custom animations under 300ms
+    - _Requirements: 15.3, 15.5_
+
+- [x] 13. Clean up deprecated components and finalize
+  - [x] 13.1 Remove old NavbarComponent and LayoutComponent
+    - Delete `src/app/core/layout/navbar/` directory (navbar.component.ts, .html, .scss)
+    - Delete or repurpose `src/app/core/layout/layout.component.ts`, `.html`, `.scss` (no longer used since LayoutShellComponent replaces it)
+    - Remove any remaining imports/references to NavbarComponent and old LayoutComponent across the codebase
+    - _Requirements: 4.1_
+  - [x] 13.2 Remove old PaginationComponent (replaced by MatPaginator)
+    - Delete `src/app/shared/components/pagination/` directory if no longer referenced
+    - Remove any remaining imports/references to PaginationComponent
+    - _Requirements: 6.2, 7.4_
+  - [x] 13.3 Verify SSR compatibility
+    - Ensure `provideAnimationsAsync()` is used (not BrowserAnimationsModule)
+    - Verify ThemeService and FilterStateService guard localStorage behind `isPlatformBrowser()`
+    - Confirm the application builds without SSR errors related to Material components
+    - _Requirements: 1.5, 3.6, 13.5_
+  - [x] 13.4 Verify accessibility requirements
+    - Confirm minimum 4.5:1 contrast ratio for normal text in both themes
+    - Confirm all icon-only buttons have aria-label attributes
+    - Confirm sidebar uses `<nav>` landmark and main content uses `<main role="main">`
+    - Confirm MatDialog traps focus and returns focus on close
+    - Confirm all interactive elements are keyboard-navigable
+    - Confirm minimum 44x44px touch targets on mobile
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 12.4_
+
+- [x] 14. Final checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation
+- Property tests validate universal correctness properties from the design document
+- Unit tests validate specific examples and edge cases
+- The existing clean architecture layers (presentation/application/domain/infrastructure) are preserved throughout
+- No API changes are required; summary statistics are computed client-side
+- All components use OnPush change detection strategy
+- All feature routes remain lazy-loaded as currently configured

@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import { AlertsPageComponent } from './alerts-page.component';
 import { AlertsFacade } from '../../application/alerts.facade';
+import { FilterStateService } from '../../../../core/services/filter-state.service';
 import { Alert } from '../../domain/models/alert.model';
 import { PageResult } from '../../../../shared/models/page-result.model';
 
@@ -14,6 +16,11 @@ describe('AlertsPageComponent', () => {
     isLoading$: BehaviorSubject<boolean>;
     error$: BehaviorSubject<string | null>;
   };
+  let mockFilterStateService: {
+    save: ReturnType<typeof vi.fn>;
+    load: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+  };
 
   const mockAlert: Alert = {
     id: 1,
@@ -24,11 +31,20 @@ describe('AlertsPageComponent', () => {
     sentAt: null,
   };
 
+  const mockSentAlert: Alert = {
+    id: 2,
+    ticker: 'VALE3',
+    status: 'SENT',
+    details: 'Dividend yield alert',
+    createdAt: new Date('2025-06-01T10:00:00.000Z'),
+    sentAt: new Date('2025-06-01T11:00:00.000Z'),
+  };
+
   const mockPageResult: PageResult<Alert> = {
-    content: [mockAlert],
+    content: [mockAlert, mockSentAlert],
     page: 0,
     size: 20,
-    totalElements: 1,
+    totalElements: 2,
     totalPages: 1,
   };
 
@@ -40,10 +56,17 @@ describe('AlertsPageComponent', () => {
       error$: new BehaviorSubject<string | null>(null),
     };
 
+    mockFilterStateService = {
+      save: vi.fn(),
+      load: vi.fn().mockReturnValue(null),
+      clear: vi.fn(),
+    };
+
     await TestBed.configureTestingModule({
-      imports: [AlertsPageComponent],
+      imports: [AlertsPageComponent, BrowserAnimationsModule],
       providers: [
         { provide: AlertsFacade, useValue: mockFacade },
+        { provide: FilterStateService, useValue: mockFilterStateService },
       ],
     }).compileComponents();
 
@@ -56,17 +79,17 @@ describe('AlertsPageComponent', () => {
     expect(mockFacade.loadAlerts).toHaveBeenCalledWith({}, 0, 20);
   });
 
-  it('should display loading indicator when loading', () => {
+  it('should display skeleton loader when loading', () => {
     mockFacade.isLoading$.next(true);
     fixture.detectChanges();
 
-    const indicator = fixture.nativeElement.querySelector('app-loading-indicator');
-    expect(indicator).toBeTruthy();
+    const skeleton = fixture.nativeElement.querySelector('app-skeleton-loader');
+    expect(skeleton).toBeTruthy();
   });
 
-  it('should not display loading indicator when not loading', () => {
-    const indicator = fixture.nativeElement.querySelector('app-loading-indicator');
-    expect(indicator).toBeFalsy();
+  it('should not display skeleton loader when not loading', () => {
+    const skeleton = fixture.nativeElement.querySelector('app-skeleton-loader');
+    expect(skeleton).toBeFalsy();
   });
 
   it('should display error message when error exists', () => {
@@ -77,20 +100,15 @@ describe('AlertsPageComponent', () => {
     expect(errorEl).toBeTruthy();
   });
 
-  it('should render alerts table when data is available', () => {
+  it('should render reusable table when data is available', () => {
     mockFacade.alerts$.next(mockPageResult);
     fixture.detectChanges();
 
-    const rows = fixture.nativeElement.querySelectorAll('.alerts-table__row');
-    expect(rows.length).toBe(1);
-
-    const cells = rows[0].querySelectorAll('td');
-    expect(cells[0].textContent).toContain('PETR4');
-    expect(cells[1].textContent).toContain('PENDING');
-    expect(cells[2].textContent).toContain('Price crossed threshold');
+    const table = fixture.nativeElement.querySelector('app-reusable-table');
+    expect(table).toBeTruthy();
   });
 
-  it('should display empty message when no alerts', () => {
+  it('should display empty state when no alerts match', () => {
     mockFacade.alerts$.next({
       content: [],
       page: 0,
@@ -100,44 +118,26 @@ describe('AlertsPageComponent', () => {
     });
     fixture.detectChanges();
 
-    const empty = fixture.nativeElement.querySelector('.alerts-page__empty');
-    expect(empty).toBeTruthy();
-    expect(empty.textContent).toContain('No alerts found');
+    const emptyState = fixture.nativeElement.querySelector('.empty-state');
+    expect(emptyState).toBeTruthy();
   });
 
-  it('should render pagination when multiple pages exist', () => {
-    mockFacade.alerts$.next({
-      ...mockPageResult,
-      totalPages: 3,
-    });
+  it('should render filter controls with MatFormField', () => {
+    const formFields = fixture.nativeElement.querySelectorAll('mat-form-field');
+    expect(formFields.length).toBe(2);
+  });
+
+  it('should render status chips with correct CSS classes', () => {
+    mockFacade.alerts$.next(mockPageResult);
     fixture.detectChanges();
 
-    const pagination = fixture.nativeElement.querySelector('app-pagination');
-    expect(pagination).toBeTruthy();
-  });
+    const chips = fixture.nativeElement.querySelectorAll('mat-chip');
+    expect(chips.length).toBe(2);
 
-  it('should call loadAlerts with new page on page change preserving current filter', () => {
-    component.filterTicker = 'PETR4';
-    component.filterStatus = 'PENDING';
-    mockFacade.loadAlerts.mockClear();
-
-    component['onPageChange'](2);
-
-    expect(mockFacade.loadAlerts).toHaveBeenCalledWith(
-      { ticker: 'PETR4', status: 'PENDING' },
-      2,
-      20,
-    );
-  });
-
-  it('should render filter controls', () => {
-    const tickerInput = fixture.nativeElement.querySelector('.alerts-page__filter-input');
-    const statusSelect = fixture.nativeElement.querySelector('.alerts-page__filter-select');
-    const filterButton = fixture.nativeElement.querySelector('.alerts-page__filter-button');
-
-    expect(tickerInput).toBeTruthy();
-    expect(statusSelect).toBeTruthy();
-    expect(filterButton).toBeTruthy();
+    const pendingChip = fixture.nativeElement.querySelector('.chip--pending');
+    const sentChip = fixture.nativeElement.querySelector('.chip--sent');
+    expect(pendingChip).toBeTruthy();
+    expect(sentChip).toBeTruthy();
   });
 
   it('should call loadAlerts with filter and page 0 when filter is applied', () => {
@@ -152,5 +152,59 @@ describe('AlertsPageComponent', () => {
       0,
       20,
     );
+  });
+
+  it('should save filter state when filter changes', () => {
+    component.filterTicker = 'PETR4';
+    component.filterStatus = 'PENDING';
+
+    component['onFilterChange']();
+
+    expect(mockFilterStateService.save).toHaveBeenCalledWith('alerts-filter', {
+      ticker: 'PETR4',
+      status: 'PENDING',
+    });
+  });
+
+  it('should restore filter state from FilterStateService on init', async () => {
+    mockFilterStateService.load.mockReturnValue({
+      ticker: 'ITUB4',
+      status: 'SENT',
+    });
+    mockFacade.loadAlerts.mockClear();
+
+    const newFixture = TestBed.createComponent(AlertsPageComponent);
+    const newComponent = newFixture.componentInstance;
+    newFixture.detectChanges();
+
+    expect(newComponent.filterTicker).toBe('ITUB4');
+    expect(newComponent.filterStatus).toBe('SENT');
+    expect(mockFacade.loadAlerts).toHaveBeenCalledWith(
+      { ticker: 'ITUB4', status: 'SENT' },
+      0,
+      20,
+    );
+  });
+
+  it('should call loadAlerts with new page on page change preserving current filter', () => {
+    component.filterTicker = 'PETR4';
+    component.filterStatus = 'PENDING';
+    mockFacade.loadAlerts.mockClear();
+
+    component['onPageChange']({ pageIndex: 2, pageSize: 20, length: 100 });
+
+    expect(mockFacade.loadAlerts).toHaveBeenCalledWith(
+      { ticker: 'PETR4', status: 'PENDING' },
+      2,
+      20,
+    );
+  });
+
+  it('should render mat-paginator when data is available', () => {
+    mockFacade.alerts$.next(mockPageResult);
+    fixture.detectChanges();
+
+    const paginator = fixture.nativeElement.querySelector('mat-paginator');
+    expect(paginator).toBeTruthy();
   });
 });

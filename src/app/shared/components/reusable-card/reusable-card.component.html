@@ -1,0 +1,15 @@
+<mat-card [class.card--elevated]="elevated" [class.card--default]="!elevated">
+  @if (title || icon) {
+    <mat-card-header>
+      @if (icon) {
+        <mat-icon mat-card-avatar class="card__icon">{{ icon }}</mat-icon>
+      }
+      @if (title) {
+        <mat-card-title>{{ title }}</mat-card-title>
+      }
+    </mat-card-header>
+  }
+  <mat-card-content>
+    <ng-content />
+  </mat-card-content>
+</mat-card>
