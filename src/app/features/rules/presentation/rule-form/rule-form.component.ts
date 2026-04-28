@@ -10,14 +10,12 @@ import {
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
 import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
-import { RuleGroup } from '../../domain/models/rule-group.model';
 
 export interface RuleFormData {
   readonly ticker: string;
   readonly field: RuleField;
   readonly operator: ComparisonOperator;
   readonly targetValue: number;
-  readonly groupId: number | null;
 }
 
 @Component({
@@ -31,7 +29,6 @@ export interface RuleFormData {
 export class RuleFormComponent implements OnChanges {
   @Input() rule: Rule | null = null;
   @Input() error: string | null = null;
-  @Input() ruleGroups: RuleGroup[] = [];
   @Output() readonly formSubmit = new EventEmitter<RuleFormData>();
   @Output() readonly formCancel = new EventEmitter<void>();
 
@@ -52,7 +49,6 @@ export class RuleFormComponent implements OnChanges {
       field: ['PRICE' as RuleField, Validators.required],
       operator: ['GREATER_THAN' as ComparisonOperator, Validators.required],
       targetValue: [null as number | null, [Validators.required]],
-      groupId: [null as number | null],
     });
   }
 
@@ -67,7 +63,6 @@ export class RuleFormComponent implements OnChanges {
         field: this.rule.field,
         operator: this.rule.operator,
         targetValue: this.rule.targetValue,
-        groupId: this.rule.groupId,
       });
       this.form.get('ticker')?.disable();
     }
@@ -85,7 +80,6 @@ export class RuleFormComponent implements OnChanges {
       field: raw.field,
       operator: raw.operator,
       targetValue: raw.targetValue,
-      groupId: raw.groupId || null,
     });
   }
 

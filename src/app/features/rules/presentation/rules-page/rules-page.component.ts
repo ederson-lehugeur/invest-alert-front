@@ -135,9 +135,8 @@ export class RulesPageComponent implements OnInit, OnDestroy {
   }
 
   protected openCreateDialog(): void {
-    const data: AlertCreationDialogData = { ruleGroups: this.currentRuleGroups };
     const dialogRef = this.dialog.open(AlertCreationDialogComponent, {
-      data,
+      data: {},
       width: '480px',
     });
 
@@ -174,10 +173,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
       groupId: row.groupId,
     };
 
-    const data: AlertCreationDialogData = {
-      rule,
-      ruleGroups: this.currentRuleGroups,
-    };
+    const data: AlertCreationDialogData = { rule };
 
     const dialogRef = this.dialog.open(AlertCreationDialogComponent, {
       data,

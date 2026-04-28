@@ -37,15 +37,6 @@
     }
   </div>
 
-  <div class="rule-form__field">
-    <label for="groupId">Rule Group (optional)</label>
-    <select id="groupId" formControlName="groupId">
-      <option [ngValue]="null">None</option>
-      @for (group of ruleGroups; track group.id) {
-        <option [ngValue]="group.id">{{ group.name }}</option>
-      }
-    </select>
-  </div>
 
   <div class="rule-form__actions">
     <button type="button" class="rule-form__button rule-form__button--cancel" (click)="onCancel()">

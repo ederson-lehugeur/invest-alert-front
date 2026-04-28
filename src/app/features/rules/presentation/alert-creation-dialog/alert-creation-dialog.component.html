@@ -43,18 +43,6 @@
       }
     </mat-form-field>
 
-    @if (data.ruleGroups.length > 0) {
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Rule Group (optional)</mat-label>
-        <mat-select formControlName="groupId">
-          <mat-option [value]="null">None</mat-option>
-          @for (group of data.ruleGroups; track group.id) {
-            <mat-option [value]="group.id">{{ group.name }} ({{ group.ticker }})</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    }
-
   </form>
 </mat-dialog-content>
 
