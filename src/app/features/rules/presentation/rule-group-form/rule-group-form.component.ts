@@ -6,7 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
+import { MaterialModule } from '../../../../shared/material/material.module';
 import { RuleField, ComparisonOperator } from '../../domain/models/rule.model';
 
 export interface RuleGroupFormData {
@@ -22,7 +22,7 @@ export interface RuleGroupFormData {
 @Component({
   selector: 'app-rule-group-form',
   standalone: true,
-  imports: [ReactiveFormsModule, ErrorMessageComponent],
+  imports: [ReactiveFormsModule, MaterialModule],
   templateUrl: './rule-group-form.component.html',
   styleUrl: './rule-group-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

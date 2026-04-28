@@ -1,70 +1,88 @@
 <form class="rule-group-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-  <h3 class="rule-group-form__title">Create Rule Group</h3>
 
-  <app-error-message [message]="error" />
+  @if (error) {
+    <mat-error class="rule-group-form__global-error">{{ error }}</mat-error>
+  }
 
-  <div class="rule-group-form__field">
-    <label for="ticker">Ticker</label>
-    <input id="ticker" type="text" formControlName="ticker" />
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Ticker</mat-label>
+    <input matInput formControlName="ticker" placeholder="e.g. PETR4" />
     @if (form.get('ticker')?.touched && form.get('ticker')?.hasError('required')) {
-      <span class="rule-group-form__error">Ticker is required</span>
+      <mat-error>Ticker is required</mat-error>
     }
-  </div>
+  </mat-form-field>
 
-  <div class="rule-group-form__field">
-    <label for="groupName">Group Name</label>
-    <input id="groupName" type="text" formControlName="name" />
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Group Name</mat-label>
+    <input matInput formControlName="name" placeholder="e.g. Petrobras Alerts" />
     @if (form.get('name')?.touched && form.get('name')?.hasError('required')) {
-      <span class="rule-group-form__error">Group name is required</span>
+      <mat-error>Group name is required</mat-error>
     }
-  </div>
+  </mat-form-field>
 
   <div class="rule-group-form__rules" formArrayName="rules">
-    <h4>Rules</h4>
+    <p class="rule-group-form__rules-label mat-body-medium">Rules</p>
+
     @for (rule of rulesArray.controls; track $index) {
       <div class="rule-group-form__rule-entry" [formGroupName]="$index">
-        <select formControlName="field" [attr.aria-label]="'Field for rule ' + ($index + 1)">
-          @for (f of fieldOptions; track f) {
-            <option [value]="f">{{ f }}</option>
-          }
-        </select>
 
-        <select formControlName="operator" [attr.aria-label]="'Operator for rule ' + ($index + 1)">
-          @for (op of operatorOptions; track op) {
-            <option [value]="op">{{ op }}</option>
-          }
-        </select>
+        <mat-form-field appearance="outline" class="rule-group-form__rule-field">
+          <mat-label>Field</mat-label>
+          <mat-select formControlName="field" [attr.aria-label]="'Field for rule ' + ($index + 1)">
+            @for (f of fieldOptions; track f) {
+              <mat-option [value]="f">{{ f }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
 
-        <input
-          type="number"
-          formControlName="targetValue"
-          placeholder="Target value"
-          [attr.aria-label]="'Target value for rule ' + ($index + 1)"
-        />
+        <mat-form-field appearance="outline" class="rule-group-form__rule-operator">
+          <mat-label>Operator</mat-label>
+          <mat-select formControlName="operator" [attr.aria-label]="'Operator for rule ' + ($index + 1)">
+            @for (op of operatorOptions; track op) {
+              <mat-option [value]="op">{{ op }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="rule-group-form__rule-value">
+          <mat-label>Target Value</mat-label>
+          <input
+            matInput
+            type="number"
+            formControlName="targetValue"
+            placeholder="e.g. 40.00"
+            [attr.aria-label]="'Target value for rule ' + ($index + 1)"
+          />
+          @if (rulesArray.at($index).get('targetValue')?.touched && rulesArray.at($index).get('targetValue')?.hasError('required')) {
+            <mat-error>Required</mat-error>
+          }
+        </mat-form-field>
 
         <button
+          mat-icon-button
           type="button"
-          class="rule-group-form__remove-button"
+          color="warn"
           (click)="removeRule($index)"
           [disabled]="rulesArray.length <= 1"
           [attr.aria-label]="'Remove rule ' + ($index + 1)"
         >
-          Remove
+          <mat-icon>delete</mat-icon>
         </button>
+
       </div>
     }
 
-    <button type="button" class="rule-group-form__add-button" (click)="addRule()">
-      + Add Rule
+    <button mat-stroked-button type="button" (click)="addRule()" class="rule-group-form__add-btn">
+      <mat-icon>add</mat-icon>
+      Add Rule
     </button>
   </div>
 
-  <div class="rule-group-form__actions">
-    <button type="button" class="rule-group-form__button rule-group-form__button--cancel" (click)="onCancel()">
-      Cancel
-    </button>
-    <button type="submit" class="rule-group-form__button rule-group-form__button--submit">
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button color="primary" type="submit" aria-label="Submit rule group form">
       Create Group
     </button>
-  </div>
+  </mat-dialog-actions>
+
 </form>

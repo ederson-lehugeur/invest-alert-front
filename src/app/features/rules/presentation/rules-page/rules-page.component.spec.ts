@@ -201,6 +201,7 @@ describe('RulesPageComponent', () => {
         active: mockRule.active,
         triggered: mockRule.triggered,
         groupId: mockRule.groupId,
+        groupName: '-',
       });
 
       expect(mockDialog.open).toHaveBeenCalledWith(
@@ -230,6 +231,7 @@ describe('RulesPageComponent', () => {
         active: mockRule.active,
         triggered: mockRule.triggered,
         groupId: mockRule.groupId,
+        groupName: '-',
       });
 
       expect(mockFacade.updateRule).toHaveBeenCalledWith(mockRule.id, {
@@ -251,6 +253,7 @@ describe('RulesPageComponent', () => {
         active: mockRule.active,
         triggered: mockRule.triggered,
         groupId: mockRule.groupId,
+        groupName: '-',
       });
 
       expect(mockFacade.updateRule).not.toHaveBeenCalled();
@@ -275,6 +278,7 @@ describe('RulesPageComponent', () => {
         active: mockRule.active,
         triggered: mockRule.triggered,
         groupId: mockRule.groupId,
+        groupName: '-',
       });
 
       expect(mockDialog.open).toHaveBeenCalledWith(
@@ -295,6 +299,7 @@ describe('RulesPageComponent', () => {
         active: mockRule.active,
         triggered: mockRule.triggered,
         groupId: mockRule.groupId,
+        groupName: '-',
       });
 
       expect(mockFacade.deleteRule).toHaveBeenCalledWith(mockRule.id);
@@ -312,6 +317,7 @@ describe('RulesPageComponent', () => {
         active: mockRule.active,
         triggered: mockRule.triggered,
         groupId: mockRule.groupId,
+        groupName: '-',
       });
 
       expect(mockFacade.deleteRule).not.toHaveBeenCalled();
@@ -342,12 +348,12 @@ describe('RulesPageComponent', () => {
     });
 
     it('should not open dialog when openEditDialog is called with triggered rule', () => {
-      component['openEditDialog']({ ...mockTriggeredRule });
+      component['openEditDialog']({ ...mockTriggeredRule, groupName: '-' });
       expect(mockDialog.open).not.toHaveBeenCalled();
     });
 
     it('should not open dialog when confirmDelete is called with triggered rule', () => {
-      component['confirmDelete']({ ...mockTriggeredRule });
+      component['confirmDelete']({ ...mockTriggeredRule, groupName: '-' });
       expect(mockDialog.open).not.toHaveBeenCalled();
     });
   });
@@ -383,6 +389,118 @@ describe('RulesPageComponent', () => {
       component['openCreateDialog']();
 
       expect(mockNotificationService.showError).toHaveBeenCalledWith('API error occurred');
+    });
+  });
+
+  describe('Create Rule Group dialog', () => {
+    it('should render "Create Rule Group" button with aria-label="Create new rule group"', () => {
+      const btn = fixture.nativeElement.querySelector('button[aria-label="Create new rule group"]');
+      expect(btn).toBeTruthy();
+    });
+
+    it('should open RuleGroupCreationDialogComponent with width 560px when button is clicked', async () => {
+      const { RuleGroupCreationDialogComponent } = await import('../rule-group-creation-dialog/rule-group-creation-dialog.component');
+
+      component['openCreateRuleGroupDialog']();
+
+      expect(mockDialog.open).toHaveBeenCalledWith(
+        RuleGroupCreationDialogComponent,
+        expect.objectContaining({ width: '560px' }),
+      );
+    });
+
+    it('should call facade.createRuleGroup with dialog result when dialog closes with data', () => {
+      const formData = {
+        ticker: 'VALE3',
+        name: 'Vale Alerts',
+        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+
+      component['openCreateRuleGroupDialog']();
+
+      expect(mockFacade.createRuleGroup).toHaveBeenCalledWith(formData);
+    });
+
+    it('should not call facade.createRuleGroup when dialog is cancelled (result is undefined)', () => {
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+
+      component['openCreateRuleGroupDialog']();
+
+      expect(mockFacade.createRuleGroup).not.toHaveBeenCalled();
+    });
+
+    it('should not call facade.createRuleGroup when dialog is cancelled (result is null)', () => {
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(null) });
+
+      component['openCreateRuleGroupDialog']();
+
+      expect(mockFacade.createRuleGroup).not.toHaveBeenCalled();
+    });
+
+    it('should show success notification "Rule group created successfully." when error$ emits null after createRuleGroup', () => {
+      const formData = {
+        ticker: 'VALE3',
+        name: 'Vale Alerts',
+        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+      mockFacade.error$.next(null);
+
+      component['openCreateRuleGroupDialog']();
+
+      expect(mockNotificationService.showSuccess).toHaveBeenCalledWith('Rule group created successfully.');
+    });
+
+    it('should show error notification with error string when error$ emits a non-null value after createRuleGroup', () => {
+      const formData = {
+        ticker: 'VALE3',
+        name: 'Vale Alerts',
+        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
+      };
+      mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
+      mockFacade.error$.next('Rule group creation failed');
+
+      component['openCreateRuleGroupDialog']();
+
+      expect(mockNotificationService.showError).toHaveBeenCalledWith('Rule group creation failed');
+    });
+
+    it('should have rulesColumns entry with key "groupName" and header "Rule Group"', () => {
+      const groupNameCol = component['rulesColumns'].find((c) => c.key === 'groupName');
+      expect(groupNameCol).toBeTruthy();
+      expect(groupNameCol?.header).toBe('Rule Group');
+    });
+  });
+
+  describe('resolveGroupName', () => {
+    beforeEach(() => {
+      mockFacade.ruleGroups$.next([mockRuleGroup]);
+      fixture.detectChanges();
+    });
+
+    it('should display the group name when groupId matches a loaded group', () => {
+      mockFacade.rules$.next([{ ...mockRule, groupId: mockRuleGroup.id }]);
+      fixture.detectChanges();
+
+      const row = component['rulesData'].find((r) => r.id === mockRule.id);
+      expect(row?.groupName).toBe(mockRuleGroup.name);
+    });
+
+    it('should display "-" when groupId is null', () => {
+      mockFacade.rules$.next([{ ...mockRule, groupId: null }]);
+      fixture.detectChanges();
+
+      const row = component['rulesData'].find((r) => r.id === mockRule.id);
+      expect(row?.groupName).toBe('-');
+    });
+
+    it('should display "-" when groupId does not match any loaded group', () => {
+      mockFacade.rules$.next([{ ...mockRule, groupId: 9999 }]);
+      fixture.detectChanges();
+
+      const row = component['rulesData'].find((r) => r.id === mockRule.id);
+      expect(row?.groupName).toBe('-');
     });
   });
 });

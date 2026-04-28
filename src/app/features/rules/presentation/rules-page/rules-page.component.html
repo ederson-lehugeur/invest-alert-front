@@ -58,7 +58,15 @@
 
   <!-- Rule Groups Section -->
   <section class="rules-page__section">
-    <h2 class="mat-title-large">Rule Groups</h2>
+    <div class="rules-page__section-header">
+      <h2 class="mat-title-large">Rule Groups</h2>
+      <button mat-flat-button color="primary"
+              (click)="openCreateRuleGroupDialog()"
+              aria-label="Create new rule group">
+        <mat-icon>add</mat-icon>
+        Create Rule Group
+      </button>
+    </div>
 
     @if (facade.isLoading$ | async) {
       <app-skeleton-loader variant="table-row" [count]="3" />

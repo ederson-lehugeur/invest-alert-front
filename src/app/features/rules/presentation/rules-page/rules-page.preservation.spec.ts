@@ -222,6 +222,7 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
             active: mapped.active,
             triggered: mapped.triggered,
             groupId: mapped.groupId,
+            groupName: '-',
           });
 
           expect(dialogSpy.open).toHaveBeenCalled();
@@ -264,6 +265,7 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
             active: mapped.active,
             triggered: mapped.triggered,
             groupId: mapped.groupId,
+            groupName: '-',
           });
 
           expect(dialogSpy.open).toHaveBeenCalled();

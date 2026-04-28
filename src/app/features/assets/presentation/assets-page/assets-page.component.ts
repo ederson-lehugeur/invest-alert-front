@@ -55,9 +55,9 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
   protected readonly columns: ColumnConfig[] = [
     { key: 'ticker', header: 'Ticker' },
     { key: 'name', header: 'Name' },
-    { key: 'currentPrice', header: 'Price', sortable: true, align: 'right' },
-    { key: 'dividendYield', header: 'Dividend Yield', sortable: true, align: 'right' },
-    { key: 'pVp', header: 'P/VP', sortable: true, align: 'right' },
+    { key: 'currentPrice', header: 'Price', sortable: true },
+    { key: 'dividendYield', header: 'Dividend Yield', sortable: true },
+    { key: 'pVp', header: 'P/VP', sortable: true },
     { key: 'updatedAt', header: 'Updated At' },
   ];
 

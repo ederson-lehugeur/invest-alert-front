@@ -155,7 +155,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
       fc.assert(
         fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
-          const triggeredRow = { ...mapped, triggered: true };
+          const triggeredRow = { ...mapped, triggered: true, groupName: '-' };
 
           mockDialog.open.mockClear();
 
@@ -171,7 +171,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
       fc.assert(
         fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
-          const triggeredRow = { ...mapped, triggered: true };
+          const triggeredRow = { ...mapped, triggered: true, groupName: '-' };
 
           mockDialog.open.mockClear();
 

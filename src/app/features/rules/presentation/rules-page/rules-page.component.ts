@@ -25,6 +25,7 @@ import {
   AlertCreationDialogComponent,
   AlertCreationDialogData,
 } from '../alert-creation-dialog/alert-creation-dialog.component';
+import { RuleGroupCreationDialogComponent } from '../rule-group-creation-dialog/rule-group-creation-dialog.component';
 import { Rule } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
 import { ColumnConfig } from '../../../../shared/components/reusable-table/column-config.model';
@@ -38,6 +39,7 @@ interface RuleRow {
   readonly active: boolean;
   readonly triggered: boolean;
   readonly groupId: number | null;
+  readonly groupName: string;
 }
 
 interface RuleGroupRow {
@@ -77,7 +79,8 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     { key: 'ticker', header: 'Ticker' },
     { key: 'field', header: 'Field' },
     { key: 'operator', header: 'Operator' },
-    { key: 'targetValue', header: 'Target Value', align: 'right' },
+    { key: 'targetValue', header: 'Target Value' },
+    { key: 'groupName', header: 'Rule Group' },
     { key: 'active', header: 'Active' },
     { key: 'actions', header: 'Actions' },
   ];
@@ -85,7 +88,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
   protected readonly ruleGroupsColumns: ColumnConfig[] = [
     { key: 'name', header: 'Name' },
     { key: 'ticker', header: 'Ticker' },
-    { key: 'rulesCount', header: 'Rules Count', align: 'right' },
+    { key: 'rulesCount', header: 'Rules Count' },
   ];
 
   protected readonly trackRuleById = (_index: number, row: RuleRow): number => row.id;
@@ -104,6 +107,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
         active: r.active,
         triggered: r.triggered,
         groupId: r.groupId,
+        groupName: this.resolveGroupName(r.groupId),
       }));
       this.cdr.markForCheck();
     });
@@ -115,6 +119,11 @@ export class RulesPageComponent implements OnInit, OnDestroy {
         name: g.name,
         ticker: g.ticker,
         rulesCount: g.rules.length,
+      }));
+      // Re-map rulesData so groupName stays in sync when groups load after rules
+      this.rulesData = this.rulesData.map((r) => ({
+        ...r,
+        groupName: this.resolveGroupName(r.groupId),
       }));
       this.cdr.markForCheck();
     });
@@ -136,6 +145,18 @@ export class RulesPageComponent implements OnInit, OnDestroy {
       if (!result) return;
       this.facade.createRule(result);
       this.watchNextError('Rule created successfully.');
+    });
+  }
+
+  protected openCreateRuleGroupDialog(): void {
+    const dialogRef = this.dialog.open(RuleGroupCreationDialogComponent, {
+      width: '560px',
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
+      if (!result) return;
+      this.facade.createRuleGroup(result);
+      this.watchNextError('Rule group created successfully.');
     });
   }
 
@@ -190,6 +211,15 @@ export class RulesPageComponent implements OnInit, OnDestroy {
       this.facade.deleteRule(row.id);
       this.watchNextError('Rule deleted successfully.');
     });
+  }
+
+  /**
+   * Resolves the group name for a given groupId from the currently loaded rule groups.
+   * Returns '-' if groupId is null or no matching group is found.
+   */
+  private resolveGroupName(groupId: number | null): string {
+    if (groupId === null) return '-';
+    return this.currentRuleGroups.find((g) => g.id === groupId)?.name ?? '-';
   }
 
   /**
