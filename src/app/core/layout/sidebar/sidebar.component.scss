@@ -1,10 +1,32 @@
+:host {
+  display: block;
+  height: 100%;
+  background-color: var(--layout-sidebar-bg, var(--mat-sys-surface-container));
+}
+
 .sidebar-nav {
   padding: 8px 0;
+  height: 100%;
+}
+
+a[mat-list-item] {
+  margin-bottom: 2px;
+
+  &:not(.active-link):hover {
+    background-color: var(--mat-sys-surface-container-highest);
+    transition: background-color 150ms ease;
+  }
+}
+
+[matListItemTitle] {
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .active-link {
   background-color: var(--mat-sys-secondary-container);
   color: var(--mat-sys-on-secondary-container);
+  border-left: 3px solid var(--mat-sys-secondary);
 
   mat-icon {
     color: var(--mat-sys-on-secondary-container);

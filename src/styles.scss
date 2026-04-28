@@ -63,6 +63,12 @@ html.light-theme {
   --color-negative-bg: rgba(198, 40, 40, 0.08);
 }
 
+// Layout Visual Hierarchy - Semantic alias tokens
+:root {
+  --layout-sidebar-bg: var(--mat-sys-surface-container);
+  --layout-topbar-bg: var(--mat-sys-surface-container-high);
+}
+
 // ===== CSS Reset =====
 
 *,
