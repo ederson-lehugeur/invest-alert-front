@@ -1,6 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthApiService } from '../infrastructure/auth-api.service';
 import { TokenStoreService } from '../infrastructure/token-store.service';
 import { ErrorHandlerService } from '../../../core/services/error-handler.service';
@@ -14,6 +16,7 @@ export class AuthFacade {
   private readonly errorHandler = inject(ErrorHandlerService);
 
   readonly isAuthenticated$ = this.tokenStore.isAuthenticated$;
+  readonly permissions$ = this.tokenStore.permissions$;
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -53,5 +56,11 @@ export class AuthFacade {
   logout(): void {
     this.tokenStore.clearToken();
     this.router.navigate(['/auth/login']);
+  }
+
+  hasPermission(permission: string): Observable<boolean> {
+    return this.permissions$.pipe(
+      map((permissions) => permissions.includes(permission))
+    );
   }
 }

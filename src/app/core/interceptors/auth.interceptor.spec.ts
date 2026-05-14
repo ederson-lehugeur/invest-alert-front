@@ -93,4 +93,69 @@ describe('authInterceptor', () => {
     expect(tokenStore.getToken()).toBe('valid-token');
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
+
+  // --- RBAC: 403 handling ---
+
+  it('should NOT redirect to /auth/login on 403 response', () => {
+    tokenStore.setToken('valid-token');
+
+    http.get('/api/protected-resource').subscribe({
+      error: () => {
+        // expected to error
+      },
+    });
+
+    const req = httpTesting.expectOne('/api/protected-resource');
+    req.flush(null, { status: 403, statusText: 'Forbidden' });
+
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('should NOT clear token on 403 response', () => {
+    tokenStore.setToken('valid-token');
+
+    http.get('/api/protected-resource').subscribe({
+      error: () => {
+        // expected to error
+      },
+    });
+
+    const req = httpTesting.expectOne('/api/protected-resource');
+    req.flush(null, { status: 403, statusText: 'Forbidden' });
+
+    expect(tokenStore.getToken()).toBe('valid-token');
+  });
+
+  it('should propagate the 403 error to the subscriber', () => {
+    tokenStore.setToken('valid-token');
+    let receivedError: HttpErrorResponse | undefined;
+
+    http.get('/api/protected-resource').subscribe({
+      error: (err: HttpErrorResponse) => {
+        receivedError = err;
+      },
+    });
+
+    const req = httpTesting.expectOne('/api/protected-resource');
+    req.flush(null, { status: 403, statusText: 'Forbidden' });
+
+    expect(receivedError).toBeDefined();
+    expect(receivedError?.status).toBe(403);
+  });
+
+  it('should preserve existing 401 behavior (clears token + redirects) after adding 403 handling', () => {
+    tokenStore.setToken('expired-token');
+
+    http.get('/api/protected').subscribe({
+      error: () => {
+        // expected to error
+      },
+    });
+
+    const req = httpTesting.expectOne('/api/protected');
+    req.flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(tokenStore.getToken()).toBeNull();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login');
+  });
 });

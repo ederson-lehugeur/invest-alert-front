@@ -31,6 +31,12 @@ describe('App Routes Integration', () => {
   let tokenStore: TokenStoreService;
   let router: Router;
 
+  function makeJwtWithPermissions(permissions: string[]): string {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({ sub: '1', permissions }));
+    return `${header}.${payload}.signature`;
+  }
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
@@ -89,7 +95,8 @@ describe('App Routes Integration', () => {
 
   describe('authenticated users', () => {
     beforeEach(() => {
-      tokenStore.setToken('test-jwt-token');
+      // Use a JWT with ALERT_CREATE permission so /rules is accessible
+      tokenStore.setToken(makeJwtWithPermissions(['ALERT_CREATE']));
     });
 
     it('should allow access to /dashboard', async () => {
@@ -135,7 +142,8 @@ describe('App Routes Integration', () => {
 
   describe('lazy loading', () => {
     beforeEach(() => {
-      tokenStore.setToken('test-jwt-token');
+      // Use a JWT with ALERT_CREATE permission so /rules is accessible
+      tokenStore.setToken(makeJwtWithPermissions(['ALERT_CREATE']));
     });
 
     it('should lazy-load dashboard routes', async () => {

@@ -17,6 +17,8 @@ import { ReusableTableComponent } from '../../../../shared/components/reusable-t
 import { CellDefDirective } from '../../../../shared/components/reusable-table/cell-def.directive';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
+import { HasPermissionDirective } from '../../../../shared/directives/has-permission.directive';
+import { PERMISSIONS } from '../../../auth/domain/models/permission.model';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -59,6 +61,7 @@ interface RuleGroupRow {
     CellDefDirective,
     SkeletonLoaderComponent,
     ErrorMessageComponent,
+    HasPermissionDirective,
   ],
   templateUrl: './rules-page.component.html',
   styleUrl: './rules-page.component.scss',
@@ -70,6 +73,8 @@ export class RulesPageComponent implements OnInit, OnDestroy {
   private readonly notificationService = inject(NotificationService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
+
+  protected readonly PERMISSIONS = PERMISSIONS;
 
   protected rulesData: RuleRow[] = [];
   protected ruleGroupsData: RuleGroupRow[] = [];
@@ -136,7 +141,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
   protected openCreateDialog(): void {
     const dialogRef = this.dialog.open(AlertCreationDialogComponent, {
-      data: {},
+      data: { ruleGroups: this.currentRuleGroups },
       width: '480px',
     });
 

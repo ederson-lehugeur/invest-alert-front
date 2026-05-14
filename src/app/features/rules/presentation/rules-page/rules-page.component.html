@@ -1,7 +1,13 @@
 <div class="rules-page">
   <div class="rules-page__header">
     <h1 class="mat-headline-medium">Rules</h1>
-    <button mat-flat-button color="primary" (click)="openCreateDialog()" aria-label="Create new rule">
+    <button
+      *appHasPermission="PERMISSIONS.ALERT_CREATE"
+      mat-flat-button
+      color="primary"
+      (click)="openCreateDialog()"
+      aria-label="Create new rule"
+    >
       <mat-icon>add</mat-icon>
       Create Rule
     </button>
@@ -33,6 +39,7 @@
           @if (!row.triggered) {
             <div class="actions-cell">
               <button
+                *appHasPermission="PERMISSIONS.ALERT_UPDATE"
                 mat-icon-button
                 (click)="openEditDialog(row)"
                 [attr.aria-label]="'Edit rule for ' + row.ticker"
@@ -40,6 +47,7 @@
                 <mat-icon>edit</mat-icon>
               </button>
               <button
+                *appHasPermission="PERMISSIONS.ALERT_DELETE"
                 mat-icon-button
                 color="warn"
                 (click)="confirmDelete(row)"

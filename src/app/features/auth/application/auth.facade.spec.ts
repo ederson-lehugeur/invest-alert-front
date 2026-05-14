@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError, BehaviorSubject } from 'rxjs';
+import * as fc from 'fast-check';
 import { AuthFacade } from './auth.facade';
 import { AuthApiService } from '../infrastructure/auth-api.service';
 import { TokenStoreService } from '../infrastructure/token-store.service';
@@ -12,7 +13,12 @@ import { User } from '../domain/models/user.model';
 describe('AuthFacade', () => {
   let facade: AuthFacade;
   let authApi: { login: ReturnType<typeof vi.fn>; register: ReturnType<typeof vi.fn> };
-  let tokenStore: { setToken: ReturnType<typeof vi.fn>; clearToken: ReturnType<typeof vi.fn>; isAuthenticated$: BehaviorSubject<boolean> };
+  let tokenStore: {
+    setToken: ReturnType<typeof vi.fn>;
+    clearToken: ReturnType<typeof vi.fn>;
+    isAuthenticated$: BehaviorSubject<boolean>;
+    permissions$: BehaviorSubject<readonly string[]>;
+  };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let errorHandler: { extractMessage: ReturnType<typeof vi.fn> };
 
@@ -26,6 +32,7 @@ describe('AuthFacade', () => {
       setToken: vi.fn(),
       clearToken: vi.fn(),
       isAuthenticated$: new BehaviorSubject<boolean>(false),
+      permissions$: new BehaviorSubject<readonly string[]>([]),
     };
 
     router = {
@@ -68,12 +75,10 @@ describe('AuthFacade', () => {
     it('should set loading to true while request is in progress', () => {
       authApi.login.mockReturnValue(of(token));
 
-      // Before calling login, loading should be false
       expect(facade.loading()).toBe(false);
 
       facade.login(command);
 
-      // After success, loading should be false again
       expect(facade.loading()).toBe(false);
     });
 
@@ -142,5 +147,128 @@ describe('AuthFacade', () => {
       tokenStore.isAuthenticated$.next(true);
       expect(value).toBe(true);
     });
+  });
+
+  describe('permissions$', () => {
+    it('should emit the same value as TokenStore.permissions$', () => {
+      const emitted: (readonly string[])[] = [];
+      facade.permissions$.subscribe((p) => emitted.push(p));
+
+      tokenStore.permissions$.next(['ALERT_CREATE']);
+      tokenStore.permissions$.next(['ALERT_CREATE', 'ALERT_UPDATE']);
+
+      expect(emitted).toEqual([[], ['ALERT_CREATE'], ['ALERT_CREATE', 'ALERT_UPDATE']]);
+    });
+
+    it('should emit empty array when not authenticated', () => {
+      let emitted: readonly string[] | undefined;
+      facade.permissions$.subscribe((p) => (emitted = p));
+
+      expect(emitted).toEqual([]);
+    });
+  });
+
+  describe('hasPermission', () => {
+    it('should return true when permission is present', () => {
+      tokenStore.permissions$.next(['ALERT_CREATE', 'ALERT_UPDATE']);
+
+      let result: boolean | undefined;
+      facade.hasPermission('ALERT_CREATE').subscribe((v) => (result = v));
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when permission is absent', () => {
+      tokenStore.permissions$.next(['ALERT_UPDATE']);
+
+      let result: boolean | undefined;
+      facade.hasPermission('ALERT_CREATE').subscribe((v) => (result = v));
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when permissions list is empty', () => {
+      tokenStore.permissions$.next([]);
+
+      let result: boolean | undefined;
+      facade.hasPermission('ALERT_CREATE').subscribe((v) => (result = v));
+
+      expect(result).toBe(false);
+    });
+
+    it('should react to permission changes', () => {
+      const results: boolean[] = [];
+      facade.hasPermission('ALERT_CREATE').subscribe((v) => results.push(v));
+
+      tokenStore.permissions$.next(['ALERT_CREATE']);
+      tokenStore.permissions$.next([]);
+
+      expect(results).toEqual([false, true, false]);
+    });
+  });
+});
+
+describe('AuthFacade - Property Tests', () => {
+  let permissionsSubject: BehaviorSubject<readonly string[]>;
+  let facade: AuthFacade;
+
+  beforeEach(() => {
+    permissionsSubject = new BehaviorSubject<readonly string[]>([]);
+
+    const tokenStore = {
+      setToken: vi.fn(),
+      clearToken: vi.fn(),
+      isAuthenticated$: new BehaviorSubject<boolean>(false),
+      permissions$: permissionsSubject,
+    };
+
+    TestBed.configureTestingModule({
+      providers: [
+        AuthFacade,
+        { provide: AuthApiService, useValue: { login: vi.fn(), register: vi.fn() } },
+        { provide: TokenStoreService, useValue: tokenStore },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ErrorHandlerService, useValue: { extractMessage: vi.fn() } },
+      ],
+    });
+
+    facade = TestBed.inject(AuthFacade);
+  });
+
+  // Feature: invest-alert-front-rbac, Property 3: Delegação de permissions$ pela AuthFacade
+  it('should delegate permissions$ directly from TokenStore without transformation', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.string({ minLength: 1, maxLength: 30 }), { maxLength: 10 }),
+        (permissions) => {
+          permissionsSubject.next(permissions);
+
+          let emitted: readonly string[] | undefined;
+          facade.permissions$.subscribe((p) => (emitted = p));
+
+          expect(emitted).toEqual(permissions);
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  // Feature: invest-alert-front-rbac, Property 4: hasPermission como teste de pertencimento
+  it('should return true iff permission is in the user permissions set', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.string({ minLength: 1, maxLength: 30 }), { maxLength: 10 }),
+        fc.string({ minLength: 1, maxLength: 30 }),
+        (userPermissions, queriedPermission) => {
+          permissionsSubject.next(userPermissions);
+
+          let result: boolean | undefined;
+          facade.hasPermission(queriedPermission).subscribe((v) => (result = v));
+
+          expect(result).toBe(userPermissions.includes(queriedPermission));
+        }
+      ),
+      { numRuns: 100 }
+    );
   });
 });

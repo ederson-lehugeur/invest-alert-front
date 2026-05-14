@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { permissionGuard } from './core/guards/permission.guard';
+import { PERMISSIONS } from './features/auth/domain/models/permission.model';
 import { LayoutShellComponent } from './core/layout/layout-shell/layout-shell.component';
 
 export const routes: Routes = [
@@ -32,6 +34,8 @@ export const routes: Routes = [
       },
       {
         path: 'rules',
+        canActivate: [permissionGuard],
+        data: { requiredPermission: PERMISSIONS.ALERT_CREATE },
         loadChildren: () =>
           import('./features/rules/rules.routes').then((m) => m.RULES_ROUTES),
       },

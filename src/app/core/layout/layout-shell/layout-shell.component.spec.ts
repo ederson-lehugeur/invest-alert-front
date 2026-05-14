@@ -4,7 +4,8 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { Component, signal, WritableSignal } from '@angular/core';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { LayoutShellComponent } from './layout-shell.component';
 import { ThemeService, ThemeMode } from '../../services/theme.service';
 import { AuthFacade } from '../../../features/auth/application/auth.facade';
@@ -21,6 +22,8 @@ interface MockThemeService {
 interface MockAuthFacade {
   logout: ReturnType<typeof vi.fn>;
   isAuthenticated$: Observable<boolean>;
+  permissions$: Observable<readonly string[]>;
+  hasPermission: (permission: string) => Observable<boolean>;
 }
 
 describe('LayoutShellComponent', () => {
@@ -45,6 +48,9 @@ describe('LayoutShellComponent', () => {
     mockAuthFacade = {
       logout: vi.fn(),
       isAuthenticated$: new BehaviorSubject(true),
+      permissions$: new BehaviorSubject<readonly string[]>([]),
+      hasPermission: (permission: string): Observable<boolean> =>
+        of(false),
     };
 
     TestBed.configureTestingModule({

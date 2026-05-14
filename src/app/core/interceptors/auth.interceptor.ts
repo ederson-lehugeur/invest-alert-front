@@ -20,6 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         tokenStore.clearToken();
         router.navigateByUrl('/auth/login');
       }
+      // 403: propagate the error without redirecting or clearing the token
       return throwError(() => error);
     })
   );

@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { AuthFacade } from '../../../auth/application/auth.facade';
 import { Rule } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
 
@@ -12,6 +14,16 @@ class MockMatDialog {
   open = vi.fn().mockReturnValue({
     afterClosed: () => of(null),
   } as Partial<MatDialogRef<unknown>>);
+}
+
+function buildMockAuthFacade(initialPermissions: readonly string[] = []) {
+  const permissionsSubject = new BehaviorSubject<readonly string[]>(initialPermissions);
+  const facade = {
+    permissions$: permissionsSubject.asObservable(),
+    hasPermission: (permission: string): Observable<boolean> =>
+      permissionsSubject.pipe(map((perms) => perms.includes(permission))),
+  } as unknown as AuthFacade;
+  return { facade, permissionsSubject };
 }
 
 describe('RulesPageComponent', () => {
@@ -33,6 +45,7 @@ describe('RulesPageComponent', () => {
     showError: ReturnType<typeof vi.fn>;
   };
   let mockDialog: { open: ReturnType<typeof vi.spyOn> };
+  let permissionsSubject: BehaviorSubject<readonly string[]>;
 
   const mockRule: Rule = {
     id: 1,
@@ -78,12 +91,21 @@ describe('RulesPageComponent', () => {
 
     mockDialog = new MockMatDialog();
 
+    // Default: user has all permissions for most tests
+    const { facade, permissionsSubject: subject } = buildMockAuthFacade([
+      'ALERT_CREATE',
+      'ALERT_UPDATE',
+      'ALERT_DELETE',
+    ]);
+    permissionsSubject = subject;
+
     await TestBed.configureTestingModule({
       imports: [RulesPageComponent, NoopAnimationsModule],
       providers: [
         { provide: RulesFacade, useValue: mockFacade },
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: MatDialog, useValue: mockDialog },
+        { provide: AuthFacade, useValue: facade },
       ],
     }).compileComponents();
 
@@ -142,7 +164,7 @@ describe('RulesPageComponent', () => {
     expect(tables.length).toBeGreaterThan(0);
   });
 
-  it('should render Create Rule button', () => {
+  it('should render Create Rule button when user has ALERT_CREATE', () => {
     const createBtn = fixture.nativeElement.querySelector('button[aria-label="Create new rule"]');
     expect(createBtn).toBeTruthy();
   });
@@ -501,6 +523,74 @@ describe('RulesPageComponent', () => {
 
       const row = component['rulesData'].find((r) => r.id === mockRule.id);
       expect(row?.groupName).toBe('-');
+    });
+  });
+
+  // --- RBAC: Permission-gated UI elements ---
+
+  describe('RBAC - Create Rule button visibility', () => {
+    it('should show "Create Rule" button when user has ALERT_CREATE', () => {
+      permissionsSubject.next(['ALERT_CREATE']);
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector('button[aria-label="Create new rule"]');
+      expect(btn).toBeTruthy();
+    });
+
+    it('should hide "Create Rule" button when user does not have ALERT_CREATE', () => {
+      permissionsSubject.next([]);
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector('button[aria-label="Create new rule"]');
+      expect(btn).toBeFalsy();
+    });
+  });
+
+  describe('RBAC - Edit action visibility', () => {
+    beforeEach(() => {
+      mockFacade.rules$.next([mockRule]);
+      fixture.detectChanges();
+      fixture.detectChanges();
+    });
+
+    it('should show edit button when user has ALERT_UPDATE', () => {
+      permissionsSubject.next(['ALERT_UPDATE']);
+      fixture.detectChanges();
+
+      const editBtn = fixture.nativeElement.querySelector(`button[aria-label="Edit rule for ${mockRule.ticker}"]`);
+      expect(editBtn).toBeTruthy();
+    });
+
+    it('should hide edit button when user does not have ALERT_UPDATE', () => {
+      permissionsSubject.next([]);
+      fixture.detectChanges();
+
+      const editBtn = fixture.nativeElement.querySelector(`button[aria-label="Edit rule for ${mockRule.ticker}"]`);
+      expect(editBtn).toBeFalsy();
+    });
+  });
+
+  describe('RBAC - Delete action visibility', () => {
+    beforeEach(() => {
+      mockFacade.rules$.next([mockRule]);
+      fixture.detectChanges();
+      fixture.detectChanges();
+    });
+
+    it('should show delete button when user has ALERT_DELETE', () => {
+      permissionsSubject.next(['ALERT_DELETE']);
+      fixture.detectChanges();
+
+      const deleteBtn = fixture.nativeElement.querySelector(`button[aria-label="Delete rule for ${mockRule.ticker}"]`);
+      expect(deleteBtn).toBeTruthy();
+    });
+
+    it('should hide delete button when user does not have ALERT_DELETE', () => {
+      permissionsSubject.next([]);
+      fixture.detectChanges();
+
+      const deleteBtn = fixture.nativeElement.querySelector(`button[aria-label="Delete rule for ${mockRule.ticker}"]`);
+      expect(deleteBtn).toBeFalsy();
     });
   });
 });

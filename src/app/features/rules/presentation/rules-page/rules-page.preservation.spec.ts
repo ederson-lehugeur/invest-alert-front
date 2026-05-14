@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import * as fc from 'fast-check';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
 import { NotificationService } from '../../../../core/services/notification.service';
+import { AuthFacade } from '../../../auth/application/auth.facade';
 import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
 import { RuleApiResponse, mapRuleResponse } from '../../infrastructure/mappers/rule.mapper';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -52,6 +54,16 @@ class MockMatDialog {
   } as Partial<MatDialogRef<unknown>>);
 }
 
+function buildMockAuthFacade(initialPermissions: readonly string[] = []) {
+  const permissionsSubject = new BehaviorSubject<readonly string[]>(initialPermissions);
+  const facade = {
+    permissions$: permissionsSubject.asObservable(),
+    hasPermission: (permission: string): Observable<boolean> =>
+      permissionsSubject.pipe(map((perms) => perms.includes(permission))),
+  } as unknown as AuthFacade;
+  return { facade, permissionsSubject };
+}
+
 function buildMockFacade() {
   return {
     loadRules: vi.fn(),
@@ -70,11 +82,19 @@ async function createTestBed(
   mockFacade: ReturnType<typeof buildMockFacade>,
   mockDialog: MockMatDialog,
 ): Promise<{ component: RulesPageComponent; fixture: ComponentFixture<RulesPageComponent>; dialogSpy: MockMatDialog }> {
+  // Provide all permissions so RBAC directives don't hide edit/delete buttons
+  const { facade: authFacade } = buildMockAuthFacade([
+    'ALERT_CREATE',
+    'ALERT_UPDATE',
+    'ALERT_DELETE',
+  ]);
+
   await TestBed.configureTestingModule({
     imports: [RulesPageComponent, NoopAnimationsModule],
     providers: [
       { provide: RulesFacade, useValue: mockFacade },
       { provide: NotificationService, useValue: { showSuccess: vi.fn(), showError: vi.fn() } },
+      { provide: AuthFacade, useValue: authFacade },
     ],
   }).compileComponents();
 

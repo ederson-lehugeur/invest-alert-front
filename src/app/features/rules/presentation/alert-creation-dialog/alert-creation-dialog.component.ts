@@ -3,9 +3,11 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { RuleGroup } from '../../domain/models/rule-group.model';
 
 export interface AlertCreationDialogData {
   readonly rule?: Rule;
+  readonly ruleGroups?: readonly RuleGroup[];
 }
 
 @Component({
@@ -43,6 +45,7 @@ export class AlertCreationDialogComponent {
       field: [this.data.rule?.field ?? ('PRICE' as RuleField), Validators.required],
       operator: [this.data.rule?.operator ?? ('GREATER_THAN' as ComparisonOperator), Validators.required],
       targetValue: [this.data.rule?.targetValue ?? (null as number | null), Validators.required],
+      groupId: [this.data.rule?.groupId ?? (null as number | null)],
     });
 
     if (this.isEditMode) {
@@ -63,6 +66,7 @@ export class AlertCreationDialogComponent {
       field: raw.field,
       operator: raw.operator,
       targetValue: raw.targetValue,
+      groupId: raw.groupId ?? null,
     });
   }
 

@@ -1,15 +1,44 @@
 <nav aria-label="Main navigation" class="sidebar-nav">
   <mat-nav-list>
-    @for (link of navLinks; track link.path) {
-      <a
-        mat-list-item
-        [routerLink]="link.path"
-        routerLinkActive="active-link"
-        (click)="onLinkClick()"
-      >
-        <mat-icon matListItemIcon>{{ link.icon }}</mat-icon>
-        <span matListItemTitle>{{ link.label }}</span>
-      </a>
-    }
+    <a
+      mat-list-item
+      routerLink="/dashboard"
+      routerLinkActive="active-link"
+      (click)="onLinkClick()"
+    >
+      <mat-icon matListItemIcon>dashboard</mat-icon>
+      <span matListItemTitle>Dashboard</span>
+    </a>
+
+    <a
+      mat-list-item
+      routerLink="/assets"
+      routerLinkActive="active-link"
+      (click)="onLinkClick()"
+    >
+      <mat-icon matListItemIcon>trending_up</mat-icon>
+      <span matListItemTitle>Assets</span>
+    </a>
+
+    <a
+      *appHasPermission="PERMISSIONS.ALERT_CREATE"
+      mat-list-item
+      routerLink="/rules"
+      routerLinkActive="active-link"
+      (click)="onLinkClick()"
+    >
+      <mat-icon matListItemIcon>rule</mat-icon>
+      <span matListItemTitle>Rules</span>
+    </a>
+
+    <a
+      mat-list-item
+      routerLink="/alerts"
+      routerLinkActive="active-link"
+      (click)="onLinkClick()"
+    >
+      <mat-icon matListItemIcon>notifications</mat-icon>
+      <span matListItemTitle>Alerts</span>
+    </a>
   </mat-nav-list>
 </nav>

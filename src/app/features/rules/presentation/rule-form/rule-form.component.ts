@@ -16,6 +16,7 @@ export interface RuleFormData {
   readonly field: RuleField;
   readonly operator: ComparisonOperator;
   readonly targetValue: number;
+  readonly groupId: number | null;
 }
 
 @Component({
@@ -80,6 +81,7 @@ export class RuleFormComponent implements OnChanges {
       field: raw.field,
       operator: raw.operator,
       targetValue: raw.targetValue,
+      groupId: raw.groupId ?? null,
     });
   }
 
