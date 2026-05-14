@@ -22,15 +22,44 @@ describe('TokenStoreService', () => {
   let service: TokenStoreService;
 
   beforeEach(() => {
+    localStorage.clear();
     service = new TokenStoreService();
   });
 
-  it('should start with null token', () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('should start with null token when localStorage is empty', () => {
     expect(service.getToken()).toBeNull();
   });
 
-  it('should start with null refresh token', () => {
+  it('should start with null refresh token when localStorage is empty', () => {
     expect(service.getRefreshToken()).toBeNull();
+  });
+
+  it('should hydrate access token from localStorage on instantiation', () => {
+    const token = makeToken();
+    localStorage.setItem('auth.accessToken', token.accessToken);
+    localStorage.setItem('auth.refreshToken', token.refreshToken);
+    localStorage.setItem('auth.accessTokenExpiresAt', String(Date.now() + 900_000));
+
+    const hydratedService = new TokenStoreService();
+
+    expect(hydratedService.getToken()).toBe(token.accessToken);
+    expect(hydratedService.getRefreshToken()).toBe(token.refreshToken);
+  });
+
+  it('should emit isAuthenticated$ as true when token exists in localStorage on instantiation', () => {
+    const token = makeToken();
+    localStorage.setItem('auth.accessToken', token.accessToken);
+
+    const hydratedService = new TokenStoreService();
+    const emissions: boolean[] = [];
+    const sub = hydratedService.isAuthenticated$.subscribe((v) => emissions.push(v));
+    sub.unsubscribe();
+
+    expect(emissions).toEqual([true]);
   });
 
   it('should store access and refresh tokens via setTokens', () => {
@@ -190,7 +219,12 @@ describe('TokenStoreService - Property Tests', () => {
   let service: TokenStoreService;
 
   beforeEach(() => {
+    localStorage.clear();
     service = new TokenStoreService();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   // Feature: invest-alert-front-rbac, Property 1: Extração de permissions do JWT
@@ -199,6 +233,7 @@ describe('TokenStoreService - Property Tests', () => {
       fc.property(
         fc.array(fc.string({ minLength: 1, maxLength: 30 }), { maxLength: 10 }),
         (permissions) => {
+          localStorage.clear();
           const freshService = new TokenStoreService();
           const payload = btoa(JSON.stringify({ sub: '1', permissions }));
           const accessToken = `header.${payload}.signature`;
@@ -226,6 +261,7 @@ describe('TokenStoreService - Property Tests', () => {
       fc.property(
         fc.array(fc.string({ minLength: 1, maxLength: 30 }), { maxLength: 10 }),
         (permissions) => {
+          localStorage.clear();
           const freshService = new TokenStoreService();
           const payload = btoa(JSON.stringify({ sub: '1', permissions }));
           const accessToken = `header.${payload}.signature`;
