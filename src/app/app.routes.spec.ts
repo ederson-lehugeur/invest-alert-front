@@ -96,7 +96,12 @@ describe('App Routes Integration', () => {
   describe('authenticated users', () => {
     beforeEach(() => {
       // Use a JWT with ALERT_CREATE permission so /rules is accessible
-      tokenStore.setToken(makeJwtWithPermissions(['ALERT_CREATE']));
+      tokenStore.setTokens({
+        accessToken: makeJwtWithPermissions(['ALERT_CREATE']),
+        refreshToken: 'rt',
+        accessTokenExpiresIn: 900,
+        refreshTokenExpiresIn: 604800,
+      });
     });
 
     it('should allow access to /dashboard', async () => {
@@ -143,7 +148,12 @@ describe('App Routes Integration', () => {
   describe('lazy loading', () => {
     beforeEach(() => {
       // Use a JWT with ALERT_CREATE permission so /rules is accessible
-      tokenStore.setToken(makeJwtWithPermissions(['ALERT_CREATE']));
+      tokenStore.setTokens({
+        accessToken: makeJwtWithPermissions(['ALERT_CREATE']),
+        refreshToken: 'rt',
+        accessTokenExpiresIn: 900,
+        refreshTokenExpiresIn: 604800,
+      });
     });
 
     it('should lazy-load dashboard routes', async () => {

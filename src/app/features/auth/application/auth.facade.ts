@@ -26,7 +26,7 @@ export class AuthFacade {
 
     this.authApi.login(command).subscribe({
       next: (token) => {
-        this.tokenStore.setToken(token.token);
+        this.tokenStore.setTokens(token);
         this.loading.set(false);
         this.router.navigate(['/dashboard']);
       },
@@ -54,8 +54,15 @@ export class AuthFacade {
   }
 
   logout(): void {
-    this.tokenStore.clearToken();
+    const refreshToken = this.tokenStore.getRefreshToken();
+    this.tokenStore.clearTokens();
     this.router.navigate(['/auth/login']);
+
+    if (refreshToken) {
+      // Fire-and-forget: revoke the refresh token on the server.
+      // Session is already cleared locally so the outcome doesn't affect UX.
+      this.authApi.logout(refreshToken).subscribe({ error: () => {} });
+    }
   }
 
   hasPermission(permission: string): Observable<boolean> {

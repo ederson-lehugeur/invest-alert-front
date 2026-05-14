@@ -39,7 +39,7 @@ describe('guestGuard', () => {
   });
 
   it('should redirect to /dashboard when authenticated', async () => {
-    tokenStore.setToken('valid-token');
+    tokenStore.setTokens({ accessToken: 'valid-token', refreshToken: 'rt', accessTokenExpiresIn: 900, refreshTokenExpiresIn: 604800 });
     const result = await firstValueFrom(runGuard());
     expect(router.createUrlTree).toHaveBeenCalledWith(['/dashboard']);
     expect(result).toBeTruthy();

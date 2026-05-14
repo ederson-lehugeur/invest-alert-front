@@ -10,12 +10,25 @@ import { ErrorHandlerService } from '../../../core/services/error-handler.servic
 import { Token } from '../domain/models/token.model';
 import { User } from '../domain/models/user.model';
 
+const mockToken: Token = {
+  accessToken: 'jwt-123',
+  refreshToken: 'rt-abc',
+  accessTokenExpiresIn: 900,
+  refreshTokenExpiresIn: 604800,
+};
+
 describe('AuthFacade', () => {
   let facade: AuthFacade;
-  let authApi: { login: ReturnType<typeof vi.fn>; register: ReturnType<typeof vi.fn> };
+  let authApi: {
+    login: ReturnType<typeof vi.fn>;
+    register: ReturnType<typeof vi.fn>;
+    logout: ReturnType<typeof vi.fn>;
+    refresh: ReturnType<typeof vi.fn>;
+  };
   let tokenStore: {
-    setToken: ReturnType<typeof vi.fn>;
-    clearToken: ReturnType<typeof vi.fn>;
+    setTokens: ReturnType<typeof vi.fn>;
+    clearTokens: ReturnType<typeof vi.fn>;
+    getRefreshToken: ReturnType<typeof vi.fn>;
     isAuthenticated$: BehaviorSubject<boolean>;
     permissions$: BehaviorSubject<readonly string[]>;
   };
@@ -26,11 +39,14 @@ describe('AuthFacade', () => {
     authApi = {
       login: vi.fn(),
       register: vi.fn(),
+      logout: vi.fn().mockReturnValue(of(undefined)),
+      refresh: vi.fn(),
     };
 
     tokenStore = {
-      setToken: vi.fn(),
-      clearToken: vi.fn(),
+      setTokens: vi.fn(),
+      clearTokens: vi.fn(),
+      getRefreshToken: vi.fn().mockReturnValue(null),
       isAuthenticated$: new BehaviorSubject<boolean>(false),
       permissions$: new BehaviorSubject<readonly string[]>([]),
     };
@@ -58,22 +74,21 @@ describe('AuthFacade', () => {
 
   describe('login', () => {
     const command = { email: 'john@example.com', password: 'secret' };
-    const token: Token = { token: 'jwt-123', expiresIn: 3600 };
 
-    it('should call API, store token, and navigate to /dashboard on success', () => {
-      authApi.login.mockReturnValue(of(token));
+    it('should call API, store tokens, and navigate to /dashboard on success', () => {
+      authApi.login.mockReturnValue(of(mockToken));
 
       facade.login(command);
 
       expect(authApi.login).toHaveBeenCalledWith(command);
-      expect(tokenStore.setToken).toHaveBeenCalledWith('jwt-123');
+      expect(tokenStore.setTokens).toHaveBeenCalledWith(mockToken);
       expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
       expect(facade.loading()).toBe(false);
       expect(facade.error()).toBeNull();
     });
 
     it('should set loading to true while request is in progress', () => {
-      authApi.login.mockReturnValue(of(token));
+      authApi.login.mockReturnValue(of(mockToken));
 
       expect(facade.loading()).toBe(false);
 
@@ -92,7 +107,7 @@ describe('AuthFacade', () => {
       expect(facade.loading()).toBe(false);
       expect(facade.error()).toBe('Invalid credentials. Please try again.');
       expect(errorHandler.extractMessage).toHaveBeenCalledWith(httpError);
-      expect(tokenStore.setToken).not.toHaveBeenCalled();
+      expect(tokenStore.setTokens).not.toHaveBeenCalled();
       expect(router.navigate).not.toHaveBeenCalled();
     });
   });
@@ -129,11 +144,30 @@ describe('AuthFacade', () => {
   });
 
   describe('logout', () => {
-    it('should clear token and navigate to /auth/login', () => {
+    it('should clear tokens and navigate to /auth/login', () => {
+      tokenStore.getRefreshToken.mockReturnValue(null);
+
       facade.logout();
 
-      expect(tokenStore.clearToken).toHaveBeenCalled();
+      expect(tokenStore.clearTokens).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/auth/login']);
+    });
+
+    it('should call API logout with the refresh token when one is available', () => {
+      tokenStore.getRefreshToken.mockReturnValue('rt-abc');
+      authApi.logout.mockReturnValue(of(undefined));
+
+      facade.logout();
+
+      expect(authApi.logout).toHaveBeenCalledWith('rt-abc');
+    });
+
+    it('should not call API logout when no refresh token is available', () => {
+      tokenStore.getRefreshToken.mockReturnValue(null);
+
+      facade.logout();
+
+      expect(authApi.logout).not.toHaveBeenCalled();
     });
   });
 
@@ -216,8 +250,9 @@ describe('AuthFacade - Property Tests', () => {
     permissionsSubject = new BehaviorSubject<readonly string[]>([]);
 
     const tokenStore = {
-      setToken: vi.fn(),
-      clearToken: vi.fn(),
+      setTokens: vi.fn(),
+      clearTokens: vi.fn(),
+      getRefreshToken: vi.fn().mockReturnValue(null),
       isAuthenticated$: new BehaviorSubject<boolean>(false),
       permissions$: permissionsSubject,
     };
@@ -225,7 +260,10 @@ describe('AuthFacade - Property Tests', () => {
     TestBed.configureTestingModule({
       providers: [
         AuthFacade,
-        { provide: AuthApiService, useValue: { login: vi.fn(), register: vi.fn() } },
+        {
+          provide: AuthApiService,
+          useValue: { login: vi.fn(), register: vi.fn(), logout: vi.fn(), refresh: vi.fn() },
+        },
         { provide: TokenStoreService, useValue: tokenStore },
         { provide: Router, useValue: { navigate: vi.fn() } },
         { provide: ErrorHandlerService, useValue: { extractMessage: vi.fn() } },

@@ -34,7 +34,7 @@ describe('authGuard', () => {
   }
 
   it('should allow access when authenticated', async () => {
-    tokenStore.setToken('valid-token');
+    tokenStore.setTokens({ accessToken: 'valid-token', refreshToken: 'rt', accessTokenExpiresIn: 900, refreshTokenExpiresIn: 604800 });
     const result = await firstValueFrom(runGuard());
     expect(result).toBe(true);
   });

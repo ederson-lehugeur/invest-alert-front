@@ -1,4 +1,6 @@
 export interface Token {
-  readonly token: string;
-  readonly expiresIn: number;
+  readonly accessToken: string;
+  readonly refreshToken: string;
+  readonly accessTokenExpiresIn: number;
+  readonly refreshTokenExpiresIn: number;
 }

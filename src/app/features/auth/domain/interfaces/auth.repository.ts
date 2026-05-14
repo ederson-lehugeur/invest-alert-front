@@ -16,4 +16,6 @@ export interface LoginCommand {
 export interface AuthRepository {
   register(command: RegisterCommand): Observable<User>;
   login(command: LoginCommand): Observable<Token>;
+  refresh(refreshToken: string): Observable<Token>;
+  logout(refreshToken: string): Observable<void>;
 }

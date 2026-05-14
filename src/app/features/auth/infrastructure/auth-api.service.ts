@@ -20,4 +20,12 @@ export class AuthApiService implements AuthRepository {
   login(command: LoginCommand): Observable<Token> {
     return this.http.post<Token>('/api/v1/auth/login', command);
   }
+
+  refresh(refreshToken: string): Observable<Token> {
+    return this.http.post<Token>('/api/v1/auth/refresh', { refreshToken });
+  }
+
+  logout(refreshToken: string): Observable<void> {
+    return this.http.post<void>('/api/v1/auth/logout', { refreshToken });
+  }
 }
