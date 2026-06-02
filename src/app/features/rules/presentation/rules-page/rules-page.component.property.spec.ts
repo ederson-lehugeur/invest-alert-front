@@ -10,11 +10,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
 import { RuleGroupFormData } from '../rule-group-form/rule-group-form.component';
 
-const VALID_FIELDS: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+const VALID_INDICATORS: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
 const VALID_OPERATORS: ComparisonOperator[] = [
   'GREATER_THAN',
   'LESS_THAN',
@@ -24,7 +24,7 @@ const VALID_OPERATORS: ComparisonOperator[] = [
 ];
 
 const ruleEntryArb = fc.record({
-  field: fc.constantFrom(...VALID_FIELDS),
+  indicatorCode: fc.constantFrom(...VALID_INDICATORS),
   operator: fc.constantFrom(...VALID_OPERATORS),
   targetValue: fc.float({ min: Math.fround(0.01), max: Math.fround(99999), noNaN: true }),
 });

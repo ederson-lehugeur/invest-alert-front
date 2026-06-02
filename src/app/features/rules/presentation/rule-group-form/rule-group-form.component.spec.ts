@@ -65,7 +65,7 @@ describe('RuleGroupFormComponent', () => {
     expect(emitSpy).toHaveBeenCalledWith({
       ticker: 'PETR4',
       name: 'My Group',
-      rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 40 }],
+      rules: [{ indicatorCode: 'PRICE', operator: 'GREATER_THAN', targetValue: 40 }],
     } satisfies RuleGroupFormData);
   });
 

@@ -24,9 +24,8 @@ describe('AssetsPageComponent', () => {
   const mockAsset: Asset = {
     ticker: 'PETR4',
     name: 'Petrobras PN',
-    currentPrice: 35.5,
-    dividendYield: 8.2,
-    pVp: 1.15,
+    assetType: 'STOCK',
+    indicators: [{ code: 'PRICE', value: 35.5 }, { code: 'DIVIDEND_YIELD', value: 8.2 }],
     updatedAt: new Date('2025-06-01T12:00:00.000Z'),
   };
 
@@ -130,10 +129,10 @@ describe('AssetsPageComponent', () => {
     expect(mockFacade.loadAssets).toHaveBeenCalledWith(2, 20);
   });
 
-  it('should sort data ascending by numeric column', () => {
-    const asset1: Asset = { ...mockAsset, ticker: 'A', currentPrice: 50 };
-    const asset2: Asset = { ...mockAsset, ticker: 'B', currentPrice: 10 };
-    const asset3: Asset = { ...mockAsset, ticker: 'C', currentPrice: 30 };
+  it('should sort data ascending by string column', () => {
+    const asset1: Asset = { ...mockAsset, ticker: 'C', name: 'Charlie' };
+    const asset2: Asset = { ...mockAsset, ticker: 'A', name: 'Alpha' };
+    const asset3: Asset = { ...mockAsset, ticker: 'B', name: 'Bravo' };
 
     mockFacade.assets$.next({
       content: [asset1, asset2, asset3],
@@ -144,15 +143,15 @@ describe('AssetsPageComponent', () => {
     });
     fixture.detectChanges();
 
-    component['onSortChange']({ active: 'currentPrice', direction: 'asc' });
+    component['onSortChange']({ active: 'ticker', direction: 'asc' });
 
-    expect(component['sortedData'].map((a) => a.ticker)).toEqual(['B', 'C', 'A']);
+    expect(component['sortedData'].map((a) => a.ticker)).toEqual(['A', 'B', 'C']);
   });
 
-  it('should sort data descending by numeric column', () => {
-    const asset1: Asset = { ...mockAsset, ticker: 'A', currentPrice: 50 };
-    const asset2: Asset = { ...mockAsset, ticker: 'B', currentPrice: 10 };
-    const asset3: Asset = { ...mockAsset, ticker: 'C', currentPrice: 30 };
+  it('should sort data descending by string column', () => {
+    const asset1: Asset = { ...mockAsset, ticker: 'C', name: 'Charlie' };
+    const asset2: Asset = { ...mockAsset, ticker: 'A', name: 'Alpha' };
+    const asset3: Asset = { ...mockAsset, ticker: 'B', name: 'Bravo' };
 
     mockFacade.assets$.next({
       content: [asset1, asset2, asset3],
@@ -163,14 +162,14 @@ describe('AssetsPageComponent', () => {
     });
     fixture.detectChanges();
 
-    component['onSortChange']({ active: 'currentPrice', direction: 'desc' });
+    component['onSortChange']({ active: 'ticker', direction: 'desc' });
 
-    expect(component['sortedData'].map((a) => a.ticker)).toEqual(['A', 'C', 'B']);
+    expect(component['sortedData'].map((a) => a.ticker)).toEqual(['C', 'B', 'A']);
   });
 
   it('should reset sort when direction is empty', () => {
-    const asset1: Asset = { ...mockAsset, ticker: 'A', currentPrice: 50 };
-    const asset2: Asset = { ...mockAsset, ticker: 'B', currentPrice: 10 };
+    const asset1: Asset = { ...mockAsset, ticker: 'C' };
+    const asset2: Asset = { ...mockAsset, ticker: 'A' };
 
     mockFacade.assets$.next({
       content: [asset1, asset2],
@@ -182,11 +181,11 @@ describe('AssetsPageComponent', () => {
     fixture.detectChanges();
 
     // Sort first
-    component['onSortChange']({ active: 'currentPrice', direction: 'asc' });
-    expect(component['sortedData'][0].ticker).toBe('B');
+    component['onSortChange']({ active: 'ticker', direction: 'asc' });
+    expect(component['sortedData'][0].ticker).toBe('A');
 
     // Reset sort
-    component['onSortChange']({ active: 'currentPrice', direction: '' });
-    expect(component['sortedData'][0].ticker).toBe('A');
+    component['onSortChange']({ active: 'ticker', direction: '' });
+    expect(component['sortedData'][0].ticker).toBe('C');
   });
 });

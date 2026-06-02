@@ -25,7 +25,7 @@ describe('RulesFacade', () => {
   const mockRule: Rule = {
     id: 1,
     ticker: 'PETR4',
-    field: 'PRICE',
+    indicatorCode: 'PRICE',
     operator: 'GREATER_THAN',
     targetValue: 40.0,
     groupId: null,
@@ -127,7 +127,7 @@ describe('RulesFacade', () => {
 
       facade.createRule({
         ticker: 'PETR4',
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'GREATER_THAN',
         targetValue: 40.0,
       });
@@ -144,7 +144,7 @@ describe('RulesFacade', () => {
 
       facade.createRule({
         ticker: 'PETR4',
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'GREATER_THAN',
         targetValue: 40.0,
       });
@@ -166,7 +166,7 @@ describe('RulesFacade', () => {
       facade.rules$.subscribe((v) => (rules = v));
 
       facade.updateRule(1, {
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'GREATER_THAN',
         targetValue: 50.0,
       });
@@ -206,7 +206,7 @@ describe('RulesFacade', () => {
       facade.createRuleGroup({
         ticker: 'PETR4',
         name: 'Petrobras Alerts',
-        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 40.0 }],
+        rules: [{ indicatorCode: 'PRICE', operator: 'GREATER_THAN', targetValue: 40.0 }],
       });
 
       expect(ruleGroups).toEqual([mockRuleGroup]);

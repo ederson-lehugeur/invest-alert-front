@@ -12,14 +12,14 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Field</mat-label>
-      <mat-select formControlName="field">
-        @for (option of fieldOptions; track option) {
+      <mat-label>Indicator</mat-label>
+      <mat-select formControlName="indicatorCode">
+        @for (option of indicatorOptions; track option) {
           <mat-option [value]="option">{{ option }}</mat-option>
         }
       </mat-select>
-      @if (form.get('field')?.hasError('required') && form.get('field')?.touched) {
-        <mat-error>Field is required</mat-error>
+      @if (form.get('indicatorCode')?.hasError('required') && form.get('indicatorCode')?.touched) {
+        <mat-error>Indicator is required</mat-error>
       }
     </mat-form-field>
 

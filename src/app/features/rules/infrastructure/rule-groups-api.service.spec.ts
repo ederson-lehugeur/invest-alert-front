@@ -15,7 +15,7 @@ describe('RuleGroupsApiService', () => {
   const ruleApi: RuleApiResponse = {
     id: 1,
     ticker: 'PETR4',
-    field: 'PRICE',
+    indicatorType: 'PRICE',
     operator: 'GREATER_THAN',
     targetValue: 40.0,
     groupId: 10,
@@ -69,7 +69,7 @@ describe('RuleGroupsApiService', () => {
         ticker: 'PETR4',
         name: 'New Group',
         rules: [
-          { field: 'PRICE' as const, operator: 'GREATER_THAN' as const, targetValue: 40.0 },
+          { indicatorCode: 'PRICE' as const, operator: 'GREATER_THAN' as const, targetValue: 40.0 },
         ],
       };
 

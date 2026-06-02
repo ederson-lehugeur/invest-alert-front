@@ -1,9 +1,9 @@
 // Feature: material-dashboard-redesign, Property 6: Alert creation form validation
 import { FormBuilder, Validators } from '@angular/forms';
 import * as fc from 'fast-check';
-import { RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { ComparisonOperator } from '../../domain/models/rule.model';
 
-const VALID_FIELDS: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+const VALID_INDICATORS: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
 const VALID_OPERATORS: ComparisonOperator[] = [
   'GREATER_THAN',
   'LESS_THAN',
@@ -18,14 +18,14 @@ const VALID_OPERATORS: ComparisonOperator[] = [
  */
 function buildForm(
   ticker: string,
-  field: string,
+  indicatorCode: string,
   operator: string,
   targetValue: number | null,
 ) {
   const fb = new FormBuilder();
   const form = fb.group({
     ticker: [ticker, Validators.required],
-    field: [field, Validators.required],
+    indicatorCode: [indicatorCode, Validators.required],
     operator: [operator, Validators.required],
     targetValue: [targetValue, Validators.required],
     groupId: [null as number | null],
@@ -40,10 +40,10 @@ describe('AlertCreationDialogComponent - Property 6: Form validation', () => {
       fc.property(
         // ticker: mix of empty and non-empty strings
         fc.oneof(fc.constant(''), fc.string({ minLength: 1, maxLength: 10 })),
-        // field: mix of valid and invalid values
+        // indicatorCode: mix of valid and invalid values
         fc.oneof(
-          fc.constantFrom(...VALID_FIELDS),
-          fc.constant('INVALID_FIELD'),
+          fc.constantFrom(...VALID_INDICATORS),
+          fc.constant('INVALID_INDICATOR'),
           fc.constant(''),
         ),
         // operator: mix of valid and invalid values
@@ -57,19 +57,16 @@ describe('AlertCreationDialogComponent - Property 6: Form validation', () => {
           fc.float({ noNaN: true, noDefaultInfinity: true }).map((n) => n as number | null),
           fc.constant(null as number | null),
         ),
-        (ticker, field, operator, targetValue) => {
-          const form = buildForm(ticker, field, operator, targetValue);
+        (ticker, indicatorCode, operator, targetValue) => {
+          const form = buildForm(ticker, indicatorCode, operator, targetValue);
 
           const isTickerValid = ticker.trim().length > 0;
-          // Angular Validators.required only checks for null/undefined/empty string
-          // It does NOT validate that the value is in a specific set
-          // So field and operator are "valid" as long as they are non-empty strings
-          const isFieldValid = field !== null && field !== undefined && field !== '';
+          const isIndicatorValid = indicatorCode !== null && indicatorCode !== undefined && indicatorCode !== '';
           const isOperatorValid = operator !== null && operator !== undefined && operator !== '';
           const isTargetValueValid = targetValue !== null && targetValue !== undefined;
 
           const expectedValid =
-            isTickerValid && isFieldValid && isOperatorValid && isTargetValueValid;
+            isTickerValid && isIndicatorValid && isOperatorValid && isTargetValueValid;
 
           expect(form.valid).toBe(expectedValid);
         },
@@ -81,11 +78,11 @@ describe('AlertCreationDialogComponent - Property 6: Form validation', () => {
   it('form is always invalid when ticker is empty', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom(...VALID_FIELDS),
+        fc.constantFrom(...VALID_INDICATORS),
         fc.constantFrom(...VALID_OPERATORS),
         fc.float({ noNaN: true, noDefaultInfinity: true }),
-        (field, operator, targetValue) => {
-          const form = buildForm('', field, operator, targetValue);
+        (indicatorCode, operator, targetValue) => {
+          const form = buildForm('', indicatorCode, operator, targetValue);
           expect(form.valid).toBe(false);
         },
       ),
@@ -97,10 +94,10 @@ describe('AlertCreationDialogComponent - Property 6: Form validation', () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 10 }),
-        fc.constantFrom(...VALID_FIELDS),
+        fc.constantFrom(...VALID_INDICATORS),
         fc.constantFrom(...VALID_OPERATORS),
-        (ticker, field, operator) => {
-          const form = buildForm(ticker, field, operator, null);
+        (ticker, indicatorCode, operator) => {
+          const form = buildForm(ticker, indicatorCode, operator, null);
           expect(form.valid).toBe(false);
         },
       ),
@@ -112,11 +109,11 @@ describe('AlertCreationDialogComponent - Property 6: Form validation', () => {
     fc.assert(
       fc.property(
         fc.string({ minLength: 1, maxLength: 10 }),
-        fc.constantFrom(...VALID_FIELDS),
+        fc.constantFrom(...VALID_INDICATORS),
         fc.constantFrom(...VALID_OPERATORS),
         fc.float({ noNaN: true, noDefaultInfinity: true }),
-        (ticker, field, operator, targetValue) => {
-          const form = buildForm(ticker, field, operator, targetValue);
+        (ticker, indicatorCode, operator, targetValue) => {
+          const form = buildForm(ticker, indicatorCode, operator, targetValue);
           expect(form.valid).toBe(true);
         },
       ),

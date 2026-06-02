@@ -50,7 +50,7 @@ describe('RulesPageComponent', () => {
   const mockRule: Rule = {
     id: 1,
     ticker: 'PETR4',
-    field: 'PRICE',
+    indicatorCode: 'PRICE',
     operator: 'GREATER_THAN',
     targetValue: 40.0,
     groupId: null,
@@ -184,7 +184,7 @@ describe('RulesPageComponent', () => {
     it('should call facade.createRule when dialog returns form data', async () => {
       const formData = {
         ticker: 'VALE3',
-        field: 'DIVIDEND_YIELD',
+        indicatorCode: 'DIVIDEND_YIELD',
         operator: 'LESS_THAN',
         targetValue: 5.5,
         groupId: null,
@@ -217,7 +217,7 @@ describe('RulesPageComponent', () => {
       component['openEditDialog']({
         id: mockRule.id,
         ticker: mockRule.ticker,
-        field: mockRule.field,
+        indicatorCode: mockRule.indicatorCode,
         operator: mockRule.operator,
         targetValue: mockRule.targetValue,
         active: mockRule.active,
@@ -237,7 +237,7 @@ describe('RulesPageComponent', () => {
     it('should call facade.updateRule when edit dialog returns form data', () => {
       const formData = {
         ticker: 'PETR4',
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'LESS_THAN',
         targetValue: 35.0,
         groupId: null,
@@ -247,7 +247,7 @@ describe('RulesPageComponent', () => {
       component['openEditDialog']({
         id: mockRule.id,
         ticker: mockRule.ticker,
-        field: mockRule.field,
+        indicatorCode: mockRule.indicatorCode,
         operator: mockRule.operator,
         targetValue: mockRule.targetValue,
         active: mockRule.active,
@@ -257,7 +257,7 @@ describe('RulesPageComponent', () => {
       });
 
       expect(mockFacade.updateRule).toHaveBeenCalledWith(mockRule.id, {
-        field: formData.field,
+        indicatorCode: formData.indicatorCode,
         operator: formData.operator,
         targetValue: formData.targetValue,
       });
@@ -269,7 +269,7 @@ describe('RulesPageComponent', () => {
       component['openEditDialog']({
         id: mockRule.id,
         ticker: mockRule.ticker,
-        field: mockRule.field,
+        indicatorCode: mockRule.indicatorCode,
         operator: mockRule.operator,
         targetValue: mockRule.targetValue,
         active: mockRule.active,
@@ -294,7 +294,7 @@ describe('RulesPageComponent', () => {
       component['confirmDelete']({
         id: mockRule.id,
         ticker: mockRule.ticker,
-        field: mockRule.field,
+        indicatorCode: mockRule.indicatorCode,
         operator: mockRule.operator,
         targetValue: mockRule.targetValue,
         active: mockRule.active,
@@ -315,7 +315,7 @@ describe('RulesPageComponent', () => {
       component['confirmDelete']({
         id: mockRule.id,
         ticker: mockRule.ticker,
-        field: mockRule.field,
+        indicatorCode: mockRule.indicatorCode,
         operator: mockRule.operator,
         targetValue: mockRule.targetValue,
         active: mockRule.active,
@@ -333,7 +333,7 @@ describe('RulesPageComponent', () => {
       component['confirmDelete']({
         id: mockRule.id,
         ticker: mockRule.ticker,
-        field: mockRule.field,
+        indicatorCode: mockRule.indicatorCode,
         operator: mockRule.operator,
         targetValue: mockRule.targetValue,
         active: mockRule.active,
@@ -384,7 +384,7 @@ describe('RulesPageComponent', () => {
     it('should show success notification after successful create', () => {
       const formData = {
         ticker: 'VALE3',
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'GREATER_THAN',
         targetValue: 10,
         groupId: null,
@@ -400,7 +400,7 @@ describe('RulesPageComponent', () => {
     it('should show error notification when facade emits an error', () => {
       const formData = {
         ticker: 'VALE3',
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'GREATER_THAN',
         targetValue: 10,
         groupId: null,
@@ -435,7 +435,7 @@ describe('RulesPageComponent', () => {
       const formData = {
         ticker: 'VALE3',
         name: 'Vale Alerts',
-        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
+        rules: [{ indicatorCode: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
       };
       mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
 
@@ -464,7 +464,7 @@ describe('RulesPageComponent', () => {
       const formData = {
         ticker: 'VALE3',
         name: 'Vale Alerts',
-        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
+        rules: [{ indicatorCode: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
       };
       mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
       mockFacade.error$.next(null);
@@ -478,7 +478,7 @@ describe('RulesPageComponent', () => {
       const formData = {
         ticker: 'VALE3',
         name: 'Vale Alerts',
-        rules: [{ field: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
+        rules: [{ indicatorCode: 'PRICE', operator: 'GREATER_THAN', targetValue: 80 }],
       };
       mockDialog.open.mockReturnValue({ afterClosed: () => of(formData) });
       mockFacade.error$.next('Rule group creation failed');

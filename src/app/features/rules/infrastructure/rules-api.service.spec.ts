@@ -14,7 +14,7 @@ describe('RulesApiService', () => {
   const ruleApiResponse: RuleApiResponse = {
     id: 1,
     ticker: 'PETR4',
-    field: 'PRICE',
+    indicatorType: 'PRICE',
     operator: 'GREATER_THAN',
     targetValue: 40.0,
     groupId: null,
@@ -57,7 +57,7 @@ describe('RulesApiService', () => {
     it('should POST /api/rules and map response', () => {
       const command = {
         ticker: 'PETR4',
-        field: 'PRICE' as const,
+        indicatorCode: 'PRICE' as const,
         operator: 'GREATER_THAN' as const,
         targetValue: 40.0,
       };
@@ -77,7 +77,7 @@ describe('RulesApiService', () => {
   describe('update', () => {
     it('should PUT /api/rules/:id and map response', () => {
       const command = {
-        field: 'DIVIDEND_YIELD' as const,
+        indicatorCode: 'DIVIDEND_YIELD' as const,
         operator: 'LESS_THAN' as const,
         targetValue: 5.0,
       };

@@ -1,16 +1,16 @@
 import { Observable } from 'rxjs';
-import { ComparisonOperator, Rule, RuleField } from '../models/rule.model';
+import { ComparisonOperator, Rule } from '../models/rule.model';
 
 export interface CreateRuleCommand {
   readonly ticker: string;
-  readonly field: RuleField;
+  readonly indicatorCode: string;
   readonly operator: ComparisonOperator;
   readonly targetValue: number;
   readonly groupId?: number | null;
 }
 
 export interface UpdateRuleCommand {
-  readonly field: RuleField;
+  readonly indicatorCode: string;
   readonly operator: ComparisonOperator;
   readonly targetValue: number;
 }

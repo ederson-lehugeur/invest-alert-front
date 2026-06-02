@@ -15,9 +15,8 @@ describe('AssetsApiService', () => {
   const assetApiResponse: AssetApiResponse = {
     ticker: 'PETR4',
     name: 'Petrobras PN',
-    currentPrice: 35.5,
-    dividendYield: 8.2,
-    pVp: 1.15,
+    assetType: 'STOCK',
+    indicators: [{ code: 'PRICE', value: 35.5 }, { code: 'DIVIDEND_YIELD', value: 8.2 }],
     updatedAt: '2025-06-01T12:00:00.000Z',
   };
 
@@ -88,9 +87,9 @@ describe('AssetsApiService', () => {
       service.getByTicker('PETR4').subscribe((asset) => {
         expect(asset.ticker).toBe('PETR4');
         expect(asset.name).toBe('Petrobras PN');
-        expect(asset.currentPrice).toBe(35.5);
-        expect(asset.dividendYield).toBe(8.2);
-        expect(asset.pVp).toBe(1.15);
+        expect(asset.assetType).toBe('STOCK');
+        expect(asset.indicators).toHaveLength(2);
+        expect(asset.indicators[0]).toEqual({ code: 'PRICE', value: 35.5 });
         expect(asset.updatedAt).toBeInstanceOf(Date);
         expect(asset.updatedAt.toISOString()).toBe('2025-06-01T12:00:00.000Z');
       });

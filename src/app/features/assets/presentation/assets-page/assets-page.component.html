@@ -22,16 +22,13 @@
       (pageChange)="onPageChange($event)"
       (rowClick)="onRowClick($event)"
     >
-      <ng-template appCellDef="currentPrice" let-row>
-        {{ row.currentPrice | number:'1.2-2' }}
-      </ng-template>
-
-      <ng-template appCellDef="dividendYield" let-row>
-        {{ row.dividendYield | number:'1.2-2' }}%
-      </ng-template>
-
-      <ng-template appCellDef="pVp" let-row>
-        {{ row.pVp | number:'1.2-2' }}
+      <ng-template appCellDef="indicators" let-row>
+        @for (ind of row.indicators; track ind.code) {
+          <span class="indicator-chip">{{ ind.code }}: {{ ind.value | number:'1.2-2' }}</span>
+        }
+        @empty {
+          <span class="indicator-empty">-</span>
+        }
       </ng-template>
 
       <ng-template appCellDef="updatedAt" let-row>

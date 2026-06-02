@@ -26,11 +26,11 @@
     @for (rule of rulesArray.controls; track $index) {
       <div class="rule-group-form__rule-entry" [formGroupName]="$index">
 
-        <mat-form-field appearance="outline" class="rule-group-form__rule-field">
-          <mat-label>Field</mat-label>
-          <mat-select formControlName="field" [attr.aria-label]="'Field for rule ' + ($index + 1)">
-            @for (f of fieldOptions; track f) {
-              <mat-option [value]="f">{{ f }}</mat-option>
+        <mat-form-field appearance="outline" class="rule-group-form__rule-indicator">
+          <mat-label>Indicator</mat-label>
+          <mat-select formControlName="indicatorCode" [attr.aria-label]="'Indicator for rule ' + ($index + 1)">
+            @for (opt of indicatorOptions; track opt) {
+              <mat-option [value]="opt">{{ opt }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

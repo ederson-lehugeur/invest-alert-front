@@ -55,9 +55,8 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
   protected readonly columns: ColumnConfig[] = [
     { key: 'ticker', header: 'Ticker' },
     { key: 'name', header: 'Name' },
-    { key: 'currentPrice', header: 'Price', sortable: true },
-    { key: 'dividendYield', header: 'Dividend Yield', sortable: true },
-    { key: 'pVp', header: 'P/VP', sortable: true },
+    { key: 'assetType', header: 'Type' },
+    { key: 'indicators', header: 'Indicators' },
     { key: 'updatedAt', header: 'Updated At' },
   ];
 
@@ -96,9 +95,17 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
     }
 
     this.sortedData = [...this.sortedData].sort((a, b) => {
-      const aVal = (a as unknown as Record<string, number>)[sort.active];
-      const bVal = (b as unknown as Record<string, number>)[sort.active];
-      return sort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+      const aVal = (a as unknown as Record<string, unknown>)[sort.active];
+      const bVal = (b as unknown as Record<string, unknown>)[sort.active];
+
+      let comparison: number;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        comparison = aVal.localeCompare(bVal);
+      } else {
+        comparison = (aVal as number) - (bVal as number);
+      }
+
+      return sort.direction === 'asc' ? comparison : -comparison;
     });
   }
 

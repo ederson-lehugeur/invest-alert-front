@@ -1,8 +1,14 @@
+export type AssetType = 'FII' | 'STOCK' | 'CRYPTOCURRENCY';
+
+export interface IndicatorValue {
+  readonly code: string;
+  readonly value: number;
+}
+
 export interface Asset {
   readonly ticker: string;
   readonly name: string;
-  readonly currentPrice: number;
-  readonly dividendYield: number;
-  readonly pVp: number;
+  readonly assetType: AssetType;
+  readonly indicators: readonly IndicatorValue[];
   readonly updatedAt: Date;
 }

@@ -1,3 +1,4 @@
+import * as fc from 'fast-check';
 import {
   AssetApiResponse,
   mapAssetResponse,
@@ -11,9 +12,11 @@ describe('asset.mapper', () => {
   const apiResponse: AssetApiResponse = {
     ticker: 'PETR4',
     name: 'Petrobras PN',
-    currentPrice: 35.5,
-    dividendYield: 8.2,
-    pVp: 1.15,
+    assetType: 'STOCK',
+    indicators: [
+      { code: 'PRICE', value: 35.5 },
+      { code: 'DIVIDEND_YIELD', value: 8.2 },
+    ],
     updatedAt: '2025-06-01T12:00:00.000Z',
   };
 
@@ -23,9 +26,11 @@ describe('asset.mapper', () => {
 
       expect(asset.ticker).toBe('PETR4');
       expect(asset.name).toBe('Petrobras PN');
-      expect(asset.currentPrice).toBe(35.5);
-      expect(asset.dividendYield).toBe(8.2);
-      expect(asset.pVp).toBe(1.15);
+      expect(asset.assetType).toBe('STOCK');
+      expect(asset.indicators).toEqual([
+        { code: 'PRICE', value: 35.5 },
+        { code: 'DIVIDEND_YIELD', value: 8.2 },
+      ]);
       expect(asset.updatedAt).toBeInstanceOf(Date);
       expect(asset.updatedAt.toISOString()).toBe('2025-06-01T12:00:00.000Z');
     });
@@ -36,9 +41,8 @@ describe('asset.mapper', () => {
       const asset: Asset = {
         ticker: 'VALE3',
         name: 'Vale ON',
-        currentPrice: 62.3,
-        dividendYield: 6.5,
-        pVp: 0.95,
+        assetType: 'FII',
+        indicators: [{ code: 'PVP', value: 0.95 }],
         updatedAt: new Date('2025-07-15T08:30:00.000Z'),
       };
 
@@ -46,18 +50,45 @@ describe('asset.mapper', () => {
 
       expect(result.ticker).toBe('VALE3');
       expect(result.name).toBe('Vale ON');
-      expect(result.currentPrice).toBe(62.3);
-      expect(result.dividendYield).toBe(6.5);
-      expect(result.pVp).toBe(0.95);
+      expect(result.assetType).toBe('FII');
+      expect(result.indicators).toEqual([{ code: 'PVP', value: 0.95 }]);
       expect(typeof result.updatedAt).toBe('string');
       expect(result.updatedAt).toBe('2025-07-15T08:30:00.000Z');
     });
   });
 
-  describe('round-trip', () => {
-    it('should produce equivalent object after mapAssetResponse then mapAssetToApiFormat', () => {
-      const roundTripped = mapAssetToApiFormat(mapAssetResponse(apiResponse));
-      expect(roundTripped).toEqual(apiResponse);
+  describe('Property 1: Asset Mapper Round-Trip', () => {
+    /**
+     * Validates: Requirements 2.1, 2.2, 2.3, 2.4
+     *
+     * For any valid AssetApiResponse, applying mapAssetResponse followed by
+     * mapAssetToApiFormat SHALL produce an object deeply equal to the original response.
+     */
+    const assetTypeArb = fc.constantFrom('FII' as const, 'STOCK' as const, 'CRYPTOCURRENCY' as const);
+
+    const indicatorArb = fc.record({
+      code: fc.stringMatching(/^[A-Z_]{1,20}$/),
+      value: fc.double({ min: -1e6, max: 1e6, noNaN: true, noDefaultInfinity: true }),
+    });
+
+    const assetApiResponseArb: fc.Arbitrary<AssetApiResponse> = fc.record({
+      ticker: fc.string({ minLength: 1, maxLength: 10 }),
+      name: fc.string({ minLength: 1, maxLength: 50 }),
+      assetType: assetTypeArb,
+      indicators: fc.array(indicatorArb, { minLength: 0, maxLength: 10 }),
+      updatedAt: fc.date({ min: new Date('2020-01-01T00:00:00.000Z'), max: new Date('2030-01-01T00:00:00.000Z') })
+        .filter(d => !isNaN(d.getTime()))
+        .map(d => d.toISOString()),
+    });
+
+    it('should produce equivalent object after round-trip mapAssetResponse -> mapAssetToApiFormat', () => {
+      fc.assert(
+        fc.property(assetApiResponseArb, (response) => {
+          const roundTripped = mapAssetToApiFormat(mapAssetResponse(response));
+          expect(roundTripped).toEqual(response);
+        }),
+        { numRuns: 100 },
+      );
     });
   });
 
@@ -79,6 +110,7 @@ describe('asset.mapper', () => {
       expect(result.totalPages).toBe(1);
       expect(result.content).toHaveLength(1);
       expect(result.content[0].ticker).toBe('PETR4');
+      expect(result.content[0].assetType).toBe('STOCK');
       expect(result.content[0].updatedAt).toBeInstanceOf(Date);
     });
 
@@ -101,9 +133,8 @@ describe('asset.mapper', () => {
       const secondResponse: AssetApiResponse = {
         ticker: 'VALE3',
         name: 'Vale ON',
-        currentPrice: 62.3,
-        dividendYield: 6.5,
-        pVp: 0.95,
+        assetType: 'CRYPTOCURRENCY',
+        indicators: [{ code: 'PRICE', value: 62.3 }],
         updatedAt: '2025-07-15T08:30:00.000Z',
       };
 

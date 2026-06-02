@@ -12,10 +12,10 @@
   </div>
 
   <div class="rule-form__field">
-    <label for="field">Field</label>
-    <select id="field" formControlName="field">
-      @for (f of fieldOptions; track f) {
-        <option [value]="f">{{ f }}</option>
+    <label for="indicatorCode">Indicator</label>
+    <select id="indicatorCode" formControlName="indicatorCode">
+      @for (opt of indicatorOptions; track opt) {
+        <option [value]="opt">{{ opt }}</option>
       }
     </select>
   </div>
