@@ -267,9 +267,8 @@ describe('Bug Condition - Binding Site 4: assets-page row.updatedAt | date:\'sho
   const knownAsset: Asset = {
     ticker: 'PETR4',
     name: 'Petrobras PN',
-    currentPrice: 35.5,
-    dividendYield: 8.2,
-    pVp: 1.15,
+    assetType: 'STOCK',
+    indicators: [{ code: 'PRICE', value: 35.5 }],
     updatedAt: KNOWN_DATE,
   };
 
@@ -299,11 +298,11 @@ describe('Bug Condition - Binding Site 4: assets-page row.updatedAt | date:\'sho
   });
 
   it('should render updatedAt in DD/MM/YYYY HH:mm:ss format (FAILS on unfixed code)', () => {
-    // updatedAt is the 6th column (index 5): ticker, name, currentPrice, dividendYield, pVp, updatedAt
+    // updatedAt is the 5th column (index 4): ticker, name, assetType, indicators, updatedAt
     const rows = fixture.nativeElement.querySelectorAll('tr.mat-mdc-row');
     expect(rows.length).toBeGreaterThan(0);
 
-    const updatedAtCell = rows[0].querySelectorAll('td.mat-mdc-cell')[5];
+    const updatedAtCell = rows[0].querySelectorAll('td.mat-mdc-cell')[4];
     expect(updatedAtCell).toBeTruthy();
 
     const renderedText = updatedAtCell.textContent?.trim() ?? '';
@@ -329,9 +328,8 @@ describe('Bug Condition - Binding Site 5: asset-detail-page asset.updatedAt | da
   const knownAsset: Asset = {
     ticker: 'PETR4',
     name: 'Petrobras PN',
-    currentPrice: 35.5,
-    dividendYield: 8.2,
-    pVp: 1.15,
+    assetType: 'STOCK',
+    indicators: [{ code: 'PRICE', value: 35.5 }],
     updatedAt: KNOWN_DATE,
   };
 
@@ -364,11 +362,11 @@ describe('Bug Condition - Binding Site 5: asset-detail-page asset.updatedAt | da
     mockAssetsFacade.selectedAsset$.next(knownAsset);
     fixture.detectChanges();
 
-    // The "Updated At" detail row is the 4th detail row (index 3)
+    // Detail rows: Type (1) + indicators (1 for PRICE) + Updated At (1) = 3
     const detailRows = fixture.nativeElement.querySelectorAll('.detail-row');
-    expect(detailRows.length).toBe(4);
+    expect(detailRows.length).toBe(3);
 
-    const updatedAtRow = detailRows[3];
+    const updatedAtRow = detailRows[2];
     const dd = updatedAtRow.querySelector('dd');
     expect(dd).toBeTruthy();
 

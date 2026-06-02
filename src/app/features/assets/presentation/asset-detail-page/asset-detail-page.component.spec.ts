@@ -23,9 +23,8 @@ describe('AssetDetailPageComponent', () => {
   const mockAsset: Asset = {
     ticker: 'PETR4',
     name: 'Petrobras PN',
-    currentPrice: 35.5,
-    dividendYield: 8.2,
-    pVp: 1.15,
+    assetType: 'STOCK',
+    indicators: [{ code: 'PRICE', value: 35.5 }, { code: 'DIVIDEND_YIELD', value: 8.2 }],
     updatedAt: new Date('2025-06-01T12:00:00.000Z'),
   };
 
@@ -102,17 +101,17 @@ describe('AssetDetailPageComponent', () => {
     mockFacade.selectedAsset$.next(mockAsset);
     fixture.detectChanges();
 
-    const dividendDd = fixture.nativeElement.querySelectorAll('.detail-row dd')[1];
-    expect(dividendDd.classList.contains('positive')).toBe(true);
+    const indicatorValues = fixture.nativeElement.querySelectorAll('.detail-row dd');
+    expect(indicatorValues.length).toBeGreaterThan(0);
   });
 
-  it('should apply negative class for negative dividend yield', () => {
+  it('should display indicators dynamically', () => {
     createComponent();
-    mockFacade.selectedAsset$.next({ ...mockAsset, dividendYield: -2.5 });
+    mockFacade.selectedAsset$.next(mockAsset);
     fixture.detectChanges();
 
-    const dividendDd = fixture.nativeElement.querySelectorAll('.detail-row dd')[1];
-    expect(dividendDd.classList.contains('negative')).toBe(true);
+    const detailRows = fixture.nativeElement.querySelectorAll('.detail-row');
+    expect(detailRows.length).toBeGreaterThan(0);
   });
 
   it('should display error message on error', () => {

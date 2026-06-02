@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
 import { NotificationService } from '../../../../core/services/notification.service';
-import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
 import { RuleApiResponse, mapRuleResponse } from '../../infrastructure/mappers/rule.mapper';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
@@ -18,7 +18,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
  * They are expected to FAIL on unfixed code, confirming the bug exists.
  */
 
-const RULE_FIELDS: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+const VALID_INDICATORS: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
 const COMPARISON_OPERATORS: ComparisonOperator[] = [
   'GREATER_THAN',
   'LESS_THAN',
@@ -27,19 +27,19 @@ const COMPARISON_OPERATORS: ComparisonOperator[] = [
   'EQUAL',
 ];
 
-const ruleFieldArb = fc.constantFrom(...RULE_FIELDS);
+const indicatorCodeArb = fc.constantFrom(...VALID_INDICATORS);
 const comparisonOperatorArb = fc.constantFrom(...COMPARISON_OPERATORS);
 
-const triggeredRuleApiResponseArb = fc.record({
+const triggeredRuleApiResponseArb: fc.Arbitrary<RuleApiResponse> = fc.record({
   id: fc.integer({ min: 1, max: 10000 }),
   ticker: fc.stringMatching(/^[A-Z]{4}[0-9]{1,2}$/),
-  field: ruleFieldArb,
+  indicatorType: indicatorCodeArb,
   operator: comparisonOperatorArb,
   targetValue: fc.float({ min: Math.fround(0.01), max: Math.fround(99999), noNaN: true }),
   groupId: fc.oneof(fc.constant(null), fc.integer({ min: 1, max: 1000 })),
   active: fc.boolean(),
   triggered: fc.constant(true),
-}) as fc.Arbitrary<RuleApiResponse & { triggered: boolean }>;
+});
 
 class MockMatDialog {
   open = vi.fn().mockReturnValue({
@@ -64,16 +64,12 @@ function buildMockFacade() {
 describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', () => {
   /**
    * **Validates: Requirements 1.1**
-   *
-   * Property 1a: Mapper preserves triggered field.
-   * For any RuleApiResponse with triggered: true, mapRuleResponse must
-   * produce a Rule with triggered === true.
    */
   it('mapper should preserve triggered field for triggered rules', () => {
     fc.assert(
       fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
-        const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
-        expect((mapped as unknown as Record<string, unknown>)['triggered']).toBe(true);
+        const mapped = mapRuleResponse(apiResponse);
+        expect(mapped.triggered).toBe(true);
       }),
       { numRuns: 50 },
     );
@@ -81,15 +77,12 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
 
   /**
    * **Validates: Requirements 1.2, 1.3, 1.4, 1.5**
-   *
-   * Property 1b: Template and component guards for triggered rules.
    */
   describe('template and component guards', () => {
     let component: RulesPageComponent;
     let fixture: ComponentFixture<RulesPageComponent>;
     let mockFacade: ReturnType<typeof buildMockFacade>;
     let mockDialog: MockMatDialog;
-    let dialogSpy: MockMatDialog;
 
     beforeEach(async () => {
       mockFacade = buildMockFacade();
@@ -109,8 +102,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
       vi.spyOn(componentDialog, 'open').mockReturnValue({
         afterClosed: () => of(false),
       } as ReturnType<MatDialog['open']>);
-      dialogSpy = componentDialog as unknown as MockMatDialog;
-      mockDialog = dialogSpy;
+      mockDialog = componentDialog as unknown as MockMatDialog;
 
       fixture.detectChanges();
     });
@@ -118,7 +110,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
     it('Edit button should not be rendered for triggered rules', () => {
       fc.assert(
         fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
-          const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
+          const mapped = mapRuleResponse(apiResponse);
           const triggeredRule = { ...mapped, triggered: true } as Rule;
 
           mockFacade.rules$.next([triggeredRule]);
@@ -136,7 +128,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
     it('Delete button should not be rendered for triggered rules', () => {
       fc.assert(
         fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
-          const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
+          const mapped = mapRuleResponse(apiResponse);
           const triggeredRule = { ...mapped, triggered: true } as Rule;
 
           mockFacade.rules$.next([triggeredRule]);
@@ -154,7 +146,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
     it('openEditDialog should not open dialog for triggered rules', () => {
       fc.assert(
         fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
-          const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
+          const mapped = mapRuleResponse(apiResponse);
           const triggeredRow = { ...mapped, triggered: true, groupName: '-' };
 
           mockDialog.open.mockClear();
@@ -170,7 +162,7 @@ describe('Bug Condition Exploration - Triggered Rules Allow Edit and Delete', ()
     it('confirmDelete should not open dialog for triggered rules', () => {
       fc.assert(
         fc.property(triggeredRuleApiResponseArb, (apiResponse) => {
-          const mapped = mapRuleResponse(apiResponse as unknown as RuleApiResponse);
+          const mapped = mapRuleResponse(apiResponse);
           const triggeredRow = { ...mapped, triggered: true, groupName: '-' };
 
           mockDialog.open.mockClear();

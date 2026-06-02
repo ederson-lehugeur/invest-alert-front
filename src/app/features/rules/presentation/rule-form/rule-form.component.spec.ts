@@ -35,7 +35,7 @@ describe('RuleFormComponent', () => {
 
     component.form.patchValue({
       ticker: 'PETR4',
-      field: 'PRICE',
+      indicatorCode: 'PRICE',
       operator: 'GREATER_THAN',
       targetValue: 40,
     });
@@ -44,7 +44,7 @@ describe('RuleFormComponent', () => {
 
     expect(emitSpy).toHaveBeenCalledWith({
       ticker: 'PETR4',
-      field: 'PRICE',
+      indicatorCode: 'PRICE',
       operator: 'GREATER_THAN',
       targetValue: 40,
       groupId: null,
@@ -55,7 +55,7 @@ describe('RuleFormComponent', () => {
     const rule: Rule = {
       id: 1,
       ticker: 'VALE3',
-      field: 'DIVIDEND_YIELD',
+      indicatorCode: 'DIVIDEND_YIELD',
       operator: 'LESS_THAN',
       targetValue: 5.0,
       groupId: null,
@@ -71,7 +71,7 @@ describe('RuleFormComponent', () => {
 
     expect(component.isEditMode).toBe(true);
     expect(component.form.getRawValue().ticker).toBe('VALE3');
-    expect(component.form.getRawValue().field).toBe('DIVIDEND_YIELD');
+    expect(component.form.getRawValue().indicatorCode).toBe('DIVIDEND_YIELD');
     expect(component.form.get('ticker')?.disabled).toBe(true);
   });
 

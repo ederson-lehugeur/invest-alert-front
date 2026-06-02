@@ -29,6 +29,10 @@
         emptyIcon="rule"
         emptyMessage="No individual rules found."
       >
+        <ng-template appCellDef="indicatorCode" let-row>
+          {{ formatIndicator(row.indicatorCode) }}
+        </ng-template>
+
         <ng-template appCellDef="active" let-row>
           <mat-icon [class]="row.active ? 'icon--positive' : 'icon--neutral'">
             {{ row.active ? 'check_circle' : 'cancel' }}

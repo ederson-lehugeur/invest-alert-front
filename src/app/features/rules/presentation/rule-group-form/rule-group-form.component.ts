@@ -7,13 +7,14 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { ComparisonOperator } from '../../domain/models/rule.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 export interface RuleGroupFormData {
   readonly ticker: string;
   readonly name: string;
   readonly rules: readonly {
-    readonly field: RuleField;
+    readonly indicatorCode: string;
     readonly operator: ComparisonOperator;
     readonly targetValue: number;
   }[];
@@ -32,7 +33,8 @@ export class RuleGroupFormComponent {
   @Output() readonly formSubmit = new EventEmitter<RuleGroupFormData>();
   @Output() readonly formCancel = new EventEmitter<void>();
 
-  readonly fieldOptions: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+  readonly indicatorOptions: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
+  readonly formatIndicator = formatIndicatorCode;
   readonly operatorOptions: ComparisonOperator[] = [
     'GREATER_THAN',
     'LESS_THAN',
@@ -85,7 +87,7 @@ export class RuleGroupFormComponent {
 
   private createRuleEntry(): FormGroup {
     return this.fb.group({
-      field: ['PRICE' as RuleField, Validators.required],
+      indicatorCode: ['PRICE', Validators.required],
       operator: ['GREATER_THAN' as ComparisonOperator, Validators.required],
       targetValue: [null as number | null, [Validators.required]],
     });

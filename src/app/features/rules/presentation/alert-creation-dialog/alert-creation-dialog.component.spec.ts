@@ -14,7 +14,7 @@ describe('AlertCreationDialogComponent', () => {
   const mockRule: Rule = {
     id: 1,
     ticker: 'PETR4',
-    field: 'PRICE',
+    indicatorCode: 'PRICE',
     operator: 'GREATER_THAN',
     targetValue: 40.0,
     groupId: null,
@@ -73,8 +73,8 @@ describe('AlertCreationDialogComponent', () => {
       expect(component.form.get('ticker')?.value).toBe('');
     });
 
-    it('should initialize form with default field PRICE', () => {
-      expect(component.form.get('field')?.value).toBe('PRICE');
+    it('should initialize form with default indicatorCode PRICE', () => {
+      expect(component.form.get('indicatorCode')?.value).toBe('PRICE');
     });
 
     it('should initialize form with default operator GREATER_THAN', () => {
@@ -98,7 +98,7 @@ describe('AlertCreationDialogComponent', () => {
     it('should mark all fields as touched when submitting invalid form', () => {
       component.onSubmit();
       expect(component.form.get('ticker')?.touched).toBe(true);
-      expect(component.form.get('field')?.touched).toBe(true);
+      expect(component.form.get('indicatorCode')?.touched).toBe(true);
       expect(component.form.get('operator')?.touched).toBe(true);
       expect(component.form.get('targetValue')?.touched).toBe(true);
     });
@@ -106,7 +106,7 @@ describe('AlertCreationDialogComponent', () => {
     it('should close dialog with form data on valid submit', () => {
       component.form.patchValue({
         ticker: 'VALE3',
-        field: 'DIVIDEND_YIELD',
+        indicatorCode: 'DIVIDEND_YIELD',
         operator: 'LESS_THAN',
         targetValue: 5.5,
         groupId: null,
@@ -116,7 +116,7 @@ describe('AlertCreationDialogComponent', () => {
 
       expect(mockDialogRef.close).toHaveBeenCalledWith({
         ticker: 'VALE3',
-        field: 'DIVIDEND_YIELD',
+        indicatorCode: 'DIVIDEND_YIELD',
         operator: 'LESS_THAN',
         targetValue: 5.5,
         groupId: null,
@@ -126,7 +126,7 @@ describe('AlertCreationDialogComponent', () => {
     it('should set isSubmitting to true during submission', () => {
       component.form.patchValue({
         ticker: 'VALE3',
-        field: 'PRICE',
+        indicatorCode: 'PRICE',
         operator: 'GREATER_THAN',
         targetValue: 10,
       });
@@ -159,8 +159,8 @@ describe('AlertCreationDialogComponent', () => {
       expect(component.form.getRawValue().ticker).toBe('PETR4');
     });
 
-    it('should pre-populate field from rule', () => {
-      expect(component.form.get('field')?.value).toBe('PRICE');
+    it('should pre-populate indicatorCode from rule', () => {
+      expect(component.form.get('indicatorCode')?.value).toBe('PRICE');
     });
 
     it('should pre-populate operator from rule', () => {

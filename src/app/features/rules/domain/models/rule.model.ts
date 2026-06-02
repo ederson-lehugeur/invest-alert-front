@@ -1,5 +1,3 @@
-export type RuleField = 'PRICE' | 'DIVIDEND_YIELD' | 'P_VP';
-
 export type ComparisonOperator =
   | 'GREATER_THAN'
   | 'LESS_THAN'
@@ -10,7 +8,7 @@ export type ComparisonOperator =
 export interface Rule {
   readonly id: number;
   readonly ticker: string;
-  readonly field: RuleField;
+  readonly indicatorCode: string;
   readonly operator: ComparisonOperator;
   readonly targetValue: number;
   readonly groupId: number | null;

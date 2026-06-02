@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../shared/material/material.module';
-import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 export interface AlertCreationDialogData {
   readonly rule?: Rule;
@@ -26,7 +27,8 @@ export class AlertCreationDialogComponent {
   readonly isSubmitting = signal(false);
   readonly isEditMode: boolean;
 
-  readonly fieldOptions: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+  readonly indicatorOptions: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
+  readonly formatIndicator = formatIndicatorCode;
   readonly operatorOptions: ComparisonOperator[] = [
     'GREATER_THAN',
     'LESS_THAN',
@@ -42,7 +44,7 @@ export class AlertCreationDialogComponent {
 
     this.form = this.fb.group({
       ticker: [this.data.rule?.ticker ?? '', Validators.required],
-      field: [this.data.rule?.field ?? ('PRICE' as RuleField), Validators.required],
+      indicatorCode: [this.data.rule?.indicatorCode ?? 'PRICE', Validators.required],
       operator: [this.data.rule?.operator ?? ('GREATER_THAN' as ComparisonOperator), Validators.required],
       targetValue: [this.data.rule?.targetValue ?? (null as number | null), Validators.required],
       groupId: [this.data.rule?.groupId ?? (null as number | null)],
@@ -63,7 +65,7 @@ export class AlertCreationDialogComponent {
     const raw = this.form.getRawValue();
     this.dialogRef.close({
       ticker: raw.ticker,
-      field: raw.field,
+      indicatorCode: raw.indicatorCode,
       operator: raw.operator,
       targetValue: raw.targetValue,
       groupId: raw.groupId ?? null,

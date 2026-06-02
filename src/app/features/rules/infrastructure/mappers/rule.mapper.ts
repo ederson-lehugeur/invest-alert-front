@@ -1,9 +1,9 @@
-import { Rule } from '../../domain/models/rule.model';
+import { ComparisonOperator, Rule } from '../../domain/models/rule.model';
 
 export interface RuleApiResponse {
   readonly id: number;
   readonly ticker: string;
-  readonly field: string;
+  readonly indicatorType: string;
   readonly operator: string;
   readonly targetValue: number;
   readonly groupId: number | null;
@@ -15,8 +15,8 @@ export function mapRuleResponse(response: RuleApiResponse): Rule {
   return {
     id: response.id,
     ticker: response.ticker,
-    field: response.field as Rule['field'],
-    operator: response.operator as Rule['operator'],
+    indicatorCode: response.indicatorType,
+    operator: response.operator as ComparisonOperator,
     targetValue: response.targetValue,
     groupId: response.groupId,
     active: response.active,
@@ -28,7 +28,7 @@ export function mapRuleToApiFormat(rule: Rule): RuleApiResponse {
   return {
     id: rule.id,
     ticker: rule.ticker,
-    field: rule.field,
+    indicatorType: rule.indicatorCode,
     operator: rule.operator,
     targetValue: rule.targetValue,
     groupId: rule.groupId,

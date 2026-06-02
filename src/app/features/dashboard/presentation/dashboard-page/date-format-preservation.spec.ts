@@ -301,9 +301,8 @@ describe('Preservation - Non-date columns in assets page render raw values uncha
         const asset: Asset = {
           ticker,
           name: 'Test Asset',
-          currentPrice: 10.0,
-          dividendYield: 5.0,
-          pVp: 1.0,
+          assetType: 'STOCK',
+          indicators: [{ code: 'PRICE', value: 10.0 }],
           updatedAt,
         };
 
@@ -327,9 +326,8 @@ describe('Preservation - Non-date columns in assets page render raw values uncha
         const asset: Asset = {
           ticker: 'TEST1',
           name,
-          currentPrice: 10.0,
-          dividendYield: 5.0,
-          pVp: 1.0,
+          assetType: 'STOCK',
+          indicators: [{ code: 'PRICE', value: 10.0 }],
           updatedAt,
         };
 
@@ -361,9 +359,8 @@ describe('Preservation - Non-date fields in asset detail page render raw values 
         const asset: Asset = {
           ticker,
           name,
-          currentPrice: 10.0,
-          dividendYield: 5.0,
-          pVp: 1.0,
+          assetType: 'STOCK',
+          indicators: [{ code: 'PRICE', value: 10.0 }],
           updatedAt,
         };
 

@@ -7,7 +7,7 @@ import { RulesPageComponent } from './rules-page.component';
 import { RulesFacade } from '../../application/rules.facade';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AuthFacade } from '../../../auth/application/auth.facade';
-import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
 import { RuleApiResponse, mapRuleResponse } from '../../infrastructure/mappers/rule.mapper';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
@@ -20,7 +20,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
  * They are expected to PASS on unfixed code (baseline behavior to preserve).
  */
 
-const RULE_FIELDS: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+const VALID_INDICATORS: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
 const COMPARISON_OPERATORS: ComparisonOperator[] = [
   'GREATER_THAN',
   'LESS_THAN',
@@ -29,13 +29,13 @@ const COMPARISON_OPERATORS: ComparisonOperator[] = [
   'EQUAL',
 ];
 
-const ruleFieldArb = fc.constantFrom(...RULE_FIELDS);
+const indicatorCodeArb = fc.constantFrom(...VALID_INDICATORS);
 const comparisonOperatorArb = fc.constantFrom(...COMPARISON_OPERATORS);
 
 const nonTriggeredRuleApiResponseArb: fc.Arbitrary<RuleApiResponse> = fc.record({
   id: fc.integer({ min: 1, max: 10000 }),
   ticker: fc.stringMatching(/^[A-Z]{4}[0-9]{1,2}$/),
-  field: ruleFieldArb as fc.Arbitrary<string>,
+  indicatorType: indicatorCodeArb as fc.Arbitrary<string>,
   operator: comparisonOperatorArb as fc.Arbitrary<string>,
   targetValue: fc.float({ min: Math.fround(0.01), max: Math.fround(99999), noNaN: true }),
   groupId: fc.oneof(fc.constant(null), fc.integer({ min: 1, max: 1000 })),
@@ -82,7 +82,6 @@ async function createTestBed(
   mockFacade: ReturnType<typeof buildMockFacade>,
   mockDialog: MockMatDialog,
 ): Promise<{ component: RulesPageComponent; fixture: ComponentFixture<RulesPageComponent>; dialogSpy: MockMatDialog }> {
-  // Provide all permissions so RBAC directives don't hide edit/delete buttons
   const { facade: authFacade } = buildMockAuthFacade([
     'ALERT_CREATE',
     'ALERT_UPDATE',
@@ -101,7 +100,6 @@ async function createTestBed(
   const fixture = TestBed.createComponent(RulesPageComponent);
   const component = fixture.componentInstance;
 
-  // Get the actual MatDialog instance from the component's injector and spy on it
   const componentDialog = fixture.debugElement.injector.get(MatDialog);
   vi.spyOn(componentDialog, 'open').mockReturnValue({
     afterClosed: () => of(null),
@@ -115,20 +113,16 @@ async function createTestBed(
 describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable', () => {
   /**
    * **Validates: Requirements 3.5**
-   *
-   * Mapper preservation property: For all non-triggered API responses,
-   * mapRuleResponse produces a Rule with identical id, ticker, field,
-   * operator, targetValue, groupId, active values.
    */
   describe('Mapper preservation', () => {
-    it('maps all fields correctly for non-triggered rules (triggered absent)', () => {
+    it('maps all fields correctly for non-triggered rules', () => {
       fc.assert(
         fc.property(nonTriggeredRuleApiResponseArb, (apiResponse) => {
           const mapped = mapRuleResponse(apiResponse);
 
           expect(mapped.id).toBe(apiResponse.id);
           expect(mapped.ticker).toBe(apiResponse.ticker);
-          expect(mapped.field).toBe(apiResponse.field);
+          expect(mapped.indicatorCode).toBe(apiResponse.indicatorType);
           expect(mapped.operator).toBe(apiResponse.operator);
           expect(mapped.targetValue).toBe(apiResponse.targetValue);
           expect(mapped.groupId).toBe(apiResponse.groupId);
@@ -145,7 +139,7 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
 
           expect(mapped.id).toBe(apiResponse.id);
           expect(mapped.ticker).toBe(apiResponse.ticker);
-          expect(mapped.field).toBe(apiResponse.field);
+          expect(mapped.indicatorCode).toBe(apiResponse.indicatorType);
           expect(mapped.operator).toBe(apiResponse.operator);
           expect(mapped.targetValue).toBe(apiResponse.targetValue);
           expect(mapped.groupId).toBe(apiResponse.groupId);
@@ -158,9 +152,6 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
 
   /**
    * **Validates: Requirements 3.1, 3.2**
-   *
-   * Template preservation property: For all non-triggered rules,
-   * Edit and Delete buttons are rendered.
    */
   describe('Template preservation', () => {
     let component: RulesPageComponent;
@@ -211,9 +202,6 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
 
   /**
    * **Validates: Requirements 3.1, 3.3**
-   *
-   * Component preservation property: For all non-triggered rules,
-   * openEditDialog opens a MatDialog.
    */
   describe('Component preservation - openEditDialog', () => {
     let component: RulesPageComponent;
@@ -236,7 +224,7 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
           component['openEditDialog']({
             id: mapped.id,
             ticker: mapped.ticker,
-            field: mapped.field,
+            indicatorCode: mapped.indicatorCode,
             operator: mapped.operator,
             targetValue: mapped.targetValue,
             active: mapped.active,
@@ -254,9 +242,6 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
 
   /**
    * **Validates: Requirements 3.2, 3.4**
-   *
-   * Component preservation property: For all non-triggered rules,
-   * confirmDelete opens a MatDialog.
    */
   describe('Component preservation - confirmDelete', () => {
     let component: RulesPageComponent;
@@ -279,7 +264,7 @@ describe('Preservation - Non-Triggered Rules Remain Fully Editable and Deletable
           component['confirmDelete']({
             id: mapped.id,
             ticker: mapped.ticker,
-            field: mapped.field,
+            indicatorCode: mapped.indicatorCode,
             operator: mapped.operator,
             targetValue: mapped.targetValue,
             active: mapped.active,

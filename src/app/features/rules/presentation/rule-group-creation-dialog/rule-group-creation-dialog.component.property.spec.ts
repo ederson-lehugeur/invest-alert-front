@@ -5,9 +5,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import * as fc from 'fast-check';
 import { RuleGroupCreationDialogComponent } from './rule-group-creation-dialog.component';
 import { RuleGroupFormData } from '../rule-group-form/rule-group-form.component';
-import { RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { ComparisonOperator } from '../../domain/models/rule.model';
 
-const VALID_FIELDS: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+const VALID_INDICATORS: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
 const VALID_OPERATORS: ComparisonOperator[] = [
   'GREATER_THAN',
   'LESS_THAN',
@@ -17,7 +17,7 @@ const VALID_OPERATORS: ComparisonOperator[] = [
 ];
 
 const ruleEntryArb = fc.record({
-  field: fc.constantFrom(...VALID_FIELDS),
+  indicatorCode: fc.constantFrom(...VALID_INDICATORS),
   operator: fc.constantFrom(...VALID_OPERATORS),
   targetValue: fc.float({ min: Math.fround(0.01), max: Math.fround(99999), noNaN: true }),
 });

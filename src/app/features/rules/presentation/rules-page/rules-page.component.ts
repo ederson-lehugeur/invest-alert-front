@@ -31,11 +31,12 @@ import { RuleGroupCreationDialogComponent } from '../rule-group-creation-dialog/
 import { Rule } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
 import { ColumnConfig } from '../../../../shared/components/reusable-table/column-config.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 interface RuleRow {
   readonly id: number;
   readonly ticker: string;
-  readonly field: string;
+  readonly indicatorCode: string;
   readonly operator: string;
   readonly targetValue: number;
   readonly active: boolean;
@@ -75,6 +76,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   protected readonly PERMISSIONS = PERMISSIONS;
+  protected readonly formatIndicator = formatIndicatorCode;
 
   protected rulesData: RuleRow[] = [];
   protected ruleGroupsData: RuleGroupRow[] = [];
@@ -82,7 +84,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
 
   protected readonly rulesColumns: ColumnConfig[] = [
     { key: 'ticker', header: 'Ticker' },
-    { key: 'field', header: 'Field' },
+    { key: 'indicatorCode', header: 'Indicator' },
     { key: 'operator', header: 'Operator' },
     { key: 'targetValue', header: 'Target Value' },
     { key: 'groupName', header: 'Rule Group' },
@@ -106,7 +108,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
       this.rulesData = rules.map((r) => ({
         id: r.id,
         ticker: r.ticker,
-        field: r.field,
+        indicatorCode: r.indicatorCode,
         operator: r.operator,
         targetValue: r.targetValue,
         active: r.active,
@@ -170,7 +172,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     const rule: Rule = {
       id: row.id,
       ticker: row.ticker,
-      field: row.field as Rule['field'],
+      indicatorCode: row.indicatorCode,
       operator: row.operator as Rule['operator'],
       targetValue: row.targetValue,
       active: row.active,
@@ -188,7 +190,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result) => {
       if (!result) return;
       this.facade.updateRule(row.id, {
-        field: result.field,
+        indicatorCode: result.indicatorCode,
         operator: result.operator,
         targetValue: result.targetValue,
       });

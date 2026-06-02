@@ -5,9 +5,9 @@
 import { FormBuilder, Validators, FormArray } from '@angular/forms';
 import * as fc from 'fast-check';
 import { RuleGroupFormComponent } from './rule-group-form.component';
-import { RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { ComparisonOperator } from '../../domain/models/rule.model';
 
-const VALID_FIELDS: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+const VALID_INDICATORS: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
 const VALID_OPERATORS: ComparisonOperator[] = [
   'GREATER_THAN',
   'LESS_THAN',
@@ -23,13 +23,13 @@ const VALID_OPERATORS: ComparisonOperator[] = [
 function buildForm(
   ticker: string,
   name: string,
-  rules: Array<{ field: string; operator: string; targetValue: number | null }>,
+  rules: Array<{ indicatorCode: string; operator: string; targetValue: number | null }>,
 ) {
   const fb = new FormBuilder();
   const rulesArray = fb.array(
     rules.map((r) =>
       fb.group({
-        field: [r.field, Validators.required],
+        indicatorCode: [r.indicatorCode, Validators.required],
         operator: [r.operator, Validators.required],
         targetValue: [r.targetValue, Validators.required],
       }),
@@ -55,7 +55,7 @@ function buildComponent(): RuleGroupFormComponent {
 
 const ruleEntryArb = (targetValue: fc.Arbitrary<number | null>) =>
   fc.record({
-    field: fc.constantFrom(...VALID_FIELDS) as fc.Arbitrary<string>,
+    indicatorCode: fc.constantFrom(...VALID_INDICATORS) as fc.Arbitrary<string>,
     operator: fc.constantFrom(...VALID_OPERATORS) as fc.Arbitrary<string>,
     targetValue,
   });
@@ -123,7 +123,7 @@ describe('RuleGroupFormComponent - Property 1: Form validity matches all-require
         (ticker, name, validRules) => {
           const rulesWithNull = [
             ...validRules,
-            { field: 'PRICE', operator: 'GREATER_THAN', targetValue: null },
+            { indicatorCode: 'PRICE', operator: 'GREATER_THAN', targetValue: null },
           ];
           const form = buildForm(ticker, name, rulesWithNull);
           expect(form.valid).toBe(false);
@@ -260,7 +260,7 @@ describe('RuleGroupFormComponent - Property 3: Invalid submit marks all controls
 
           component.form.patchValue({ ticker, name });
           (component.rulesArray.at(0) as ReturnType<FormArray['at']>).patchValue({
-            field: 'PRICE',
+            indicatorCode: 'PRICE',
             operator: 'GREATER_THAN',
             targetValue,
           });

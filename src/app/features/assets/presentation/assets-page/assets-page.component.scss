@@ -11,3 +11,18 @@
     font-weight: 500;
   }
 }
+
+mat-tab-group {
+  display: block;
+  margin-top: 16px;
+
+  ::ng-deep .mat-mdc-tab-body-content {
+    padding-top: 16px;
+  }
+}
+
+.indicator-cell {
+  display: block;
+  text-align: left;
+  font-family: 'Roboto Mono', monospace;
+}

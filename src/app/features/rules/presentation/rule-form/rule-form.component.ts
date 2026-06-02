@@ -9,11 +9,12 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
-import { Rule, RuleField, ComparisonOperator } from '../../domain/models/rule.model';
+import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 export interface RuleFormData {
   readonly ticker: string;
-  readonly field: RuleField;
+  readonly indicatorCode: string;
   readonly operator: ComparisonOperator;
   readonly targetValue: number;
   readonly groupId: number | null;
@@ -33,7 +34,8 @@ export class RuleFormComponent implements OnChanges {
   @Output() readonly formSubmit = new EventEmitter<RuleFormData>();
   @Output() readonly formCancel = new EventEmitter<void>();
 
-  readonly fieldOptions: RuleField[] = ['PRICE', 'DIVIDEND_YIELD', 'P_VP'];
+  readonly indicatorOptions: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
+  readonly formatIndicator = formatIndicatorCode;
   readonly operatorOptions: ComparisonOperator[] = [
     'GREATER_THAN',
     'LESS_THAN',
@@ -47,7 +49,7 @@ export class RuleFormComponent implements OnChanges {
   constructor(private readonly fb: FormBuilder) {
     this.form = this.fb.group({
       ticker: ['', Validators.required],
-      field: ['PRICE' as RuleField, Validators.required],
+      indicatorCode: ['PRICE', Validators.required],
       operator: ['GREATER_THAN' as ComparisonOperator, Validators.required],
       targetValue: [null as number | null, [Validators.required]],
     });
@@ -61,7 +63,7 @@ export class RuleFormComponent implements OnChanges {
     if (changes['rule'] && this.rule) {
       this.form.patchValue({
         ticker: this.rule.ticker,
-        field: this.rule.field,
+        indicatorCode: this.rule.indicatorCode,
         operator: this.rule.operator,
         targetValue: this.rule.targetValue,
       });
@@ -78,7 +80,7 @@ export class RuleFormComponent implements OnChanges {
     const raw = this.form.getRawValue();
     this.formSubmit.emit({
       ticker: raw.ticker,
-      field: raw.field,
+      indicatorCode: raw.indicatorCode,
       operator: raw.operator,
       targetValue: raw.targetValue,
       groupId: raw.groupId ?? null,
