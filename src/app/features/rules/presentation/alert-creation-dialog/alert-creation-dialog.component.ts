@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MaterialModule } from '../../../../shared/material/material.module';
 import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 export interface AlertCreationDialogData {
   readonly rule?: Rule;
@@ -27,6 +28,7 @@ export class AlertCreationDialogComponent {
   readonly isEditMode: boolean;
 
   readonly indicatorOptions: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
+  readonly formatIndicator = formatIndicatorCode;
   readonly operatorOptions: ComparisonOperator[] = [
     'GREATER_THAN',
     'LESS_THAN',

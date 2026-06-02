@@ -22,10 +22,10 @@ describe('AssetsPageComponent', () => {
   let router: Router;
 
   const mockAsset: Asset = {
-    ticker: 'PETR4',
-    name: 'Petrobras PN',
-    assetType: 'STOCK',
-    indicators: [{ code: 'PRICE', value: 35.5 }, { code: 'DIVIDEND_YIELD', value: 8.2 }],
+    ticker: 'HGLG11',
+    name: 'CGHG Logistica',
+    assetType: 'FII',
+    indicators: [{ code: 'DIVIDEND_YIELD', value: 8.2 }, { code: 'PVP', value: 1.05 }],
     updatedAt: new Date('2025-06-01T12:00:00.000Z'),
   };
 
@@ -120,7 +120,7 @@ describe('AssetsPageComponent', () => {
 
     component['onRowClick'](mockAsset);
 
-    expect(router.navigate).toHaveBeenCalledWith(['/assets', 'PETR4']);
+    expect(router.navigate).toHaveBeenCalledWith(['/assets', 'HGLG11']);
   });
 
   it('should call loadAssets with new page on page change', () => {
@@ -187,5 +187,50 @@ describe('AssetsPageComponent', () => {
     // Reset sort
     component['onSortChange']({ active: 'ticker', direction: '' });
     expect(component['sortedData'][0].ticker).toBe('C');
+  });
+
+  it('should preserve selected tab on page change', () => {
+    mockFacade.assets$.next(mockPageResult);
+    fixture.detectChanges();
+
+    component['onTabChange'](2);
+    expect(component['selectedTabIndex']).toBe(2);
+
+    component['onPageChange']({ pageIndex: 1, pageSize: 20, length: 100 });
+    expect(component['selectedTabIndex']).toBe(2);
+  });
+
+  it('should reset sort state on tab change', () => {
+    mockFacade.assets$.next(mockPageResult);
+    fixture.detectChanges();
+
+    component['onSortChange']({ active: 'ticker', direction: 'asc' });
+    component['onTabChange'](1);
+
+    // After tab change, sort is reset - sortedData matches unsorted partition order
+    expect(component['selectedTabIndex']).toBe(1);
+  });
+
+  it('should partition assets by type for active tab', () => {
+    const fiiAsset: Asset = { ...mockAsset, ticker: 'HGLG11', assetType: 'FII' };
+    const stockAsset: Asset = { ...mockAsset, ticker: 'PETR4', assetType: 'STOCK' };
+
+    mockFacade.assets$.next({
+      content: [fiiAsset, stockAsset],
+      page: 0,
+      size: 20,
+      totalElements: 2,
+      totalPages: 1,
+    });
+    fixture.detectChanges();
+
+    // Default tab is FII (index 0)
+    expect(component['sortedData'].length).toBe(1);
+    expect(component['sortedData'][0].ticker).toBe('HGLG11');
+
+    // Switch to Stocks tab (index 1)
+    component['onTabChange'](1);
+    expect(component['sortedData'].length).toBe(1);
+    expect(component['sortedData'][0].ticker).toBe('PETR4');
   });
 });

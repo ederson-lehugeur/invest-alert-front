@@ -15,7 +15,7 @@
     <label for="indicatorCode">Indicator</label>
     <select id="indicatorCode" formControlName="indicatorCode">
       @for (opt of indicatorOptions; track opt) {
-        <option [value]="opt">{{ opt }}</option>
+        <option [value]="opt">{{ formatIndicator(opt) }}</option>
       }
     </select>
   </div>

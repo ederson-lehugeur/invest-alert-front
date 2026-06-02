@@ -31,6 +31,7 @@ import { RuleGroupCreationDialogComponent } from '../rule-group-creation-dialog/
 import { Rule } from '../../domain/models/rule.model';
 import { RuleGroup } from '../../domain/models/rule-group.model';
 import { ColumnConfig } from '../../../../shared/components/reusable-table/column-config.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 interface RuleRow {
   readonly id: number;
@@ -75,6 +76,7 @@ export class RulesPageComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   protected readonly PERMISSIONS = PERMISSIONS;
+  protected readonly formatIndicator = formatIndicatorCode;
 
   protected rulesData: RuleRow[] = [];
   protected ruleGroupsData: RuleGroupRow[] = [];

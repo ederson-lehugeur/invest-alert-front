@@ -28,7 +28,7 @@
           @if (asset.indicators.length > 0) {
             @for (ind of asset.indicators; track ind.code) {
               <div class="detail-row">
-                <dt>{{ ind.code }}</dt>
+                <dt>{{ formatIndicator(ind.code) }}</dt>
                 <dd>{{ ind.value | number:'1.2-2' }}</dd>
               </div>
             }

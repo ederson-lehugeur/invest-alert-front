@@ -5,6 +5,7 @@ import { AssetsFacade } from '../../application/assets.facade';
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
 import { MaterialModule } from '../../../../shared/material/material.module';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 @Component({
   selector: 'app-asset-detail-page',
@@ -17,6 +18,7 @@ import { MaterialModule } from '../../../../shared/material/material.module';
 export class AssetDetailPageComponent implements OnInit {
   protected readonly facade = inject(AssetsFacade);
   private readonly route = inject(ActivatedRoute);
+  protected readonly formatIndicator = formatIndicatorCode;
 
   ngOnInit(): void {
     const ticker = this.route.snapshot.paramMap.get('ticker');

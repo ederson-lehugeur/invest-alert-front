@@ -30,7 +30,7 @@
           <mat-label>Indicator</mat-label>
           <mat-select formControlName="indicatorCode" [attr.aria-label]="'Indicator for rule ' + ($index + 1)">
             @for (opt of indicatorOptions; track opt) {
-              <mat-option [value]="opt">{{ opt }}</mat-option>
+              <mat-option [value]="opt">{{ formatIndicator(opt) }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

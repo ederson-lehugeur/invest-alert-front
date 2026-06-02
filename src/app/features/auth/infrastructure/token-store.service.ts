@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Token } from '../domain/models/token.model';
@@ -9,11 +10,15 @@ const STORAGE_KEY_EXPIRES_AT = 'auth.accessTokenExpiresAt';
 
 @Injectable({ providedIn: 'root' })
 export class TokenStoreService {
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   private readonly tokenSubject = new BehaviorSubject<string | null>(
-    localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN)
+    this.isBrowser ? localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN) : null
   );
   private readonly permissionsSubject = new BehaviorSubject<readonly string[]>(
-    this.extractPermissions(localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN) ?? '')
+    this.extractPermissions(
+      this.isBrowser ? (localStorage.getItem(STORAGE_KEY_ACCESS_TOKEN) ?? '') : ''
+    )
   );
 
   readonly token$ = this.tokenSubject.asObservable();
@@ -23,9 +28,11 @@ export class TokenStoreService {
   setTokens(tokenResponse: Token): void {
     const expiresAt = Date.now() + tokenResponse.accessTokenExpiresIn * 1000;
 
-    localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, tokenResponse.accessToken);
-    localStorage.setItem(STORAGE_KEY_REFRESH_TOKEN, tokenResponse.refreshToken);
-    localStorage.setItem(STORAGE_KEY_EXPIRES_AT, String(expiresAt));
+    if (this.isBrowser) {
+      localStorage.setItem(STORAGE_KEY_ACCESS_TOKEN, tokenResponse.accessToken);
+      localStorage.setItem(STORAGE_KEY_REFRESH_TOKEN, tokenResponse.refreshToken);
+      localStorage.setItem(STORAGE_KEY_EXPIRES_AT, String(expiresAt));
+    }
 
     this.tokenSubject.next(tokenResponse.accessToken);
     this.permissionsSubject.next(this.extractPermissions(tokenResponse.accessToken));
@@ -36,10 +43,13 @@ export class TokenStoreService {
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(STORAGE_KEY_REFRESH_TOKEN);
+    return this.isBrowser ? localStorage.getItem(STORAGE_KEY_REFRESH_TOKEN) : null;
   }
 
   isAccessTokenExpired(): boolean {
+    if (!this.isBrowser) {
+      return true;
+    }
     const expiresAt = localStorage.getItem(STORAGE_KEY_EXPIRES_AT);
     if (expiresAt === null) {
       return true;
@@ -49,9 +59,11 @@ export class TokenStoreService {
   }
 
   clearTokens(): void {
-    localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
-    localStorage.removeItem(STORAGE_KEY_REFRESH_TOKEN);
-    localStorage.removeItem(STORAGE_KEY_EXPIRES_AT);
+    if (this.isBrowser) {
+      localStorage.removeItem(STORAGE_KEY_ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_EXPIRES_AT);
+    }
 
     this.tokenSubject.next(null);
     this.permissionsSubject.next([]);

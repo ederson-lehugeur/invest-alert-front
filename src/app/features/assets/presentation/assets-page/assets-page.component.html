@@ -6,34 +6,46 @@
   @if (facade.isLoading$ | async) {
     <app-skeleton-loader variant="table-row" [count]="5" />
   } @else {
-    <app-reusable-table
-      [columns]="columns"
-      [data]="sortedData"
-      [sortable]="true"
-      [paginator]="true"
-      [pageSize]="currentSize"
-      [pageIndex]="currentPage"
-      [totalElements]="totalElements"
-      [trackByFn]="trackByTicker"
-      [rowClickable]="true"
-      emptyIcon="trending_flat"
-      emptyMessage="No assets found."
-      (sortChange)="onSortChange($event)"
-      (pageChange)="onPageChange($event)"
-      (rowClick)="onRowClick($event)"
+    <mat-tab-group
+      [selectedIndex]="selectedTabIndex"
+      (selectedIndexChange)="onTabChange($event)"
     >
-      <ng-template appCellDef="indicators" let-row>
-        @for (ind of row.indicators; track ind.code) {
-          <span class="indicator-chip">{{ ind.code }}: {{ ind.value | number:'1.2-2' }}</span>
-        }
-        @empty {
-          <span class="indicator-empty">-</span>
-        }
-      </ng-template>
+      @for (tab of tabs; track tab.type) {
+        <mat-tab [label]="tab.label">
+          <app-reusable-table
+            [columns]="activeColumns"
+            [data]="sortedData"
+            [sortable]="true"
+            [paginator]="true"
+            [pageSize]="currentSize"
+            [pageIndex]="currentPage"
+            [totalElements]="totalElements"
+            [trackByFn]="trackByTicker"
+            [rowClickable]="true"
+            emptyIcon="trending_flat"
+            emptyMessage="No assets found."
+            (sortChange)="onSortChange($event)"
+            (pageChange)="onPageChange($event)"
+            (rowClick)="onRowClick($event)"
+          >
+            @for (col of activeColumns.slice(3); track col.key) {
+              <ng-template [appCellDef]="col.key" let-row>
+                <span class="indicator-cell">
+                  @if (getIndicatorValue(row, col.key) !== undefined) {
+                    {{ getIndicatorValue(row, col.key) | number:'1.2-2' }}
+                  } @else {
+                    -
+                  }
+                </span>
+              </ng-template>
+            }
 
-      <ng-template appCellDef="updatedAt" let-row>
-        {{ row.updatedAt | date:'dd/MM/yyyy HH:mm:ss' }}
-      </ng-template>
-    </app-reusable-table>
+            <ng-template appCellDef="updatedAt" let-row>
+              {{ row.updatedAt | date:'dd/MM/yyyy HH:mm:ss' }}
+            </ng-template>
+          </app-reusable-table>
+        </mat-tab>
+      }
+    </mat-tab-group>
   }
 </div>

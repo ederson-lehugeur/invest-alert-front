@@ -19,6 +19,14 @@ import { CellDefDirective } from '../../../../shared/components/reusable-table/c
 import { SkeletonLoaderComponent } from '../../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
 import { ColumnConfig } from '../../../../shared/components/reusable-table/column-config.model';
+import {
+  TABS,
+  partitionByType,
+  buildColumnsForTab,
+  sortAssets,
+  getIndicatorValue,
+  AssetPartition,
+} from './asset-tab.utils';
 
 const DEFAULT_PAGE = 0;
 const DEFAULT_SIZE = 20;
@@ -45,20 +53,18 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly destroy$ = new Subject<void>();
 
+  protected readonly tabs = TABS;
+  protected readonly getIndicatorValue = getIndicatorValue;
+
+  protected selectedTabIndex = 0;
   protected sortedData: Asset[] = [];
+  protected activeColumns: ColumnConfig[] = [];
   protected currentPage = DEFAULT_PAGE;
   protected currentSize = DEFAULT_SIZE;
   protected totalElements = 0;
 
-  private originalData: Asset[] = [];
-
-  protected readonly columns: ColumnConfig[] = [
-    { key: 'ticker', header: 'Ticker' },
-    { key: 'name', header: 'Name' },
-    { key: 'assetType', header: 'Type' },
-    { key: 'indicators', header: 'Indicators' },
-    { key: 'updatedAt', header: 'Updated At' },
-  ];
+  private partition: AssetPartition = { FII: [], STOCK: [], CRYPTOCURRENCY: [] };
+  private currentSort: Sort = { active: '', direction: '' };
 
   protected readonly trackByTicker = (_index: number, asset: Asset): string =>
     asset.ticker;
@@ -70,14 +76,15 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe((pageResult) => {
         if (pageResult) {
-          this.originalData = [...pageResult.content];
-          this.sortedData = [...pageResult.content];
+          this.partition = partitionByType(pageResult.content);
           this.currentPage = pageResult.page;
           this.currentSize = pageResult.size;
           this.totalElements = pageResult.totalElements;
+          this.recomputeActiveView();
         } else {
-          this.originalData = [];
+          this.partition = { FII: [], STOCK: [], CRYPTOCURRENCY: [] };
           this.sortedData = [];
+          this.activeColumns = [];
           this.totalElements = 0;
         }
       });
@@ -88,25 +95,17 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  protected onTabChange(index: number): void {
+    this.selectedTabIndex = index;
+    this.currentSort = { active: '', direction: '' };
+    this.recomputeActiveView();
+  }
+
   protected onSortChange(sort: Sort): void {
-    if (!sort.active || sort.direction === '') {
-      this.sortedData = [...this.originalData];
-      return;
-    }
-
-    this.sortedData = [...this.sortedData].sort((a, b) => {
-      const aVal = (a as unknown as Record<string, unknown>)[sort.active];
-      const bVal = (b as unknown as Record<string, unknown>)[sort.active];
-
-      let comparison: number;
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        comparison = aVal.localeCompare(bVal);
-      } else {
-        comparison = (aVal as number) - (bVal as number);
-      }
-
-      return sort.direction === 'asc' ? comparison : -comparison;
-    });
+    this.currentSort = sort;
+    const activeAssets = this.getActiveAssets();
+    const indicatorCodes = this.getIndicatorCodes();
+    this.sortedData = sortAssets(activeAssets, sort, indicatorCodes);
   }
 
   protected onPageChange(event: PageEvent): void {
@@ -117,5 +116,23 @@ export class AssetsPageComponent implements OnInit, OnDestroy {
 
   protected onRowClick(asset: Asset): void {
     this.router.navigate(['/assets', asset.ticker]);
+  }
+
+  private recomputeActiveView(): void {
+    const activeAssets = this.getActiveAssets();
+    this.activeColumns = buildColumnsForTab(activeAssets);
+    const indicatorCodes = this.getIndicatorCodes();
+    this.sortedData = sortAssets(activeAssets, this.currentSort, indicatorCodes);
+  }
+
+  private getActiveAssets(): readonly Asset[] {
+    const activeType = TABS[this.selectedTabIndex].type;
+    return this.partition[activeType];
+  }
+
+  private getIndicatorCodes(): string[] {
+    return this.activeColumns
+      .slice(3)
+      .map(col => col.key);
   }
 }

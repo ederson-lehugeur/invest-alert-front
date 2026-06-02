@@ -10,6 +10,7 @@ import {
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ErrorMessageComponent } from '../../../../shared/components/error-message/error-message.component';
 import { Rule, ComparisonOperator } from '../../domain/models/rule.model';
+import { formatIndicatorCode } from '../../../../shared/utils/indicator-format.util';
 
 export interface RuleFormData {
   readonly ticker: string;
@@ -34,6 +35,7 @@ export class RuleFormComponent implements OnChanges {
   @Output() readonly formCancel = new EventEmitter<void>();
 
   readonly indicatorOptions: string[] = ['PRICE', 'DIVIDEND_YIELD', 'PVP', 'PL', 'ROE'];
+  readonly formatIndicator = formatIndicatorCode;
   readonly operatorOptions: ComparisonOperator[] = [
     'GREATER_THAN',
     'LESS_THAN',
